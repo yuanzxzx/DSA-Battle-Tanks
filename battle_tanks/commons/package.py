@@ -147,39 +147,35 @@ class Struct:
 
 
     @staticmethod
+    @staticmethod
     def unpack_all_data(data: bytes) -> list:
-        """ Decode data in chunks of 14 bytes if data length is greater than 14. """
         index = 0
         step = 0
         data_wrapped:List[tuple] = []
 
-        """
-        
-        FIX: BUFFER
-        
-        """
-
         while index < len(data):
+            # Check for player-sized packets (which now includes your bullets)
             if data[index] == Struct.SIZE_PLAYER:
-                step +=  Struct.SIZE_PLAYER
+                step += Struct.SIZE_PLAYER
                 chunk = data[index :step]
 
                 if len(chunk) == Struct.SIZE_PLAYER:
-                    player = Struct.unpack_player(chunk)
-                    data_wrapped.append(player)
+                    # Unpack the chunk (status is the first byte after size)
+                    unpacked = Struct.unpack_player(chunk)
+                    data_wrapped.append(unpacked)
                 index = step
 
+            # Check for event-sized packets (like bricks breaking)
             elif data[index] == Struct.BUFFER_SIZE_EVENT_RESPONSE:
-                step +=  Struct.BUFFER_SIZE_EVENT_RESPONSE
+                step += Struct.BUFFER_SIZE_EVENT_RESPONSE
                 chunk = data[index:step]
-
 
                 if len(chunk) == Struct.BUFFER_SIZE_EVENT_RESPONSE:
                     data_wrapped.append(Struct.unpack_event(chunk))
 
                 index = step
-
-
+            else:
+                index += 1 # Advance to prevent infinite loops if data is corrupted
 
         return data_wrapped
 
