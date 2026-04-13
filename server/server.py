@@ -47,13 +47,16 @@ class Server:
     Server made in socket TCP
     TODO: socket with udp for players moves.
     """
-
     def __init__(self,addr, lvl_map_tmx:str):
         self.tick_last_sent = time.time()
         self._data:Dict[int,dict] = defaultdict(dict)
         self._buffer_state_events = []
         self._sockets = []
 
+        
+        self._active_bullets = []
+
+        
         self._filter_name:list = []
         self._current_player = 0
 
