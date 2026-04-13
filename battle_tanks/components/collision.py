@@ -160,30 +160,50 @@ class Collision:
 
     @classmethod
     def collide_with_objects(cls,player: dict):
-        pass
+        """
+        COLLIDE WITH X AND Y SIZE
+        """
+        if player["x"] <= 0:
+            player["x"] = 0
+        elif player["x"] + Player.SIZE_BODY_RECT[0] >= cls.size_screen[0]:
+            player["x"] = cls.size_screen[0] - Player.SIZE_BODY_RECT[0]
 
-    @classmethod
-    def check_collision_bullet(cls, player_data: dict, collision_radius: int) -> dict:
-        # ... (existing bullet trajectory logic) ...
-        for brick in list(cls.bricks): # Use a list copy to safely remove during iteration
-            target_pos = brick.rect.center
-            distance = math.sqrt((bullet_pos[0] - target_pos[0]) ** 2 +
-                                (bullet_pos[1] - target_pos[1]) ** 2)
-        
-            if distance <= collision_radius:
-                if isinstance(brick, Brick):
-                    # 1. Remove from the network game state (for new players joining)
-                    if brick.data in cls.game_state:
-                        cls.game_state = cls.game_state.replace(brick.data, b"")
-                
-                    # 2. THE FIX: Remove from the physics group
-                    cls.bricks.remove(brick) 
-                
-                    return {
-                        "type": 5, # Struct.BRICK
-                        "x": brick.rect.x,
-                        "y": brick.rect.y,
-                        "w": brick.rect.w,
-                        "h": brick.rect.h,
-                    }
-        return {}
+        if player["y"] <= 0:
+            player["y"] = 0
+        elif player["y"] + Player.SIZE_BODY_RECT[1] >= cls.size_screen[1]:
+            player["y"] = player["y"] - Player.SIZE_BODY_RECT[1]
+
+
+        body = pg.Rect(player["x"], player["y"], Player.SIZE_BODY_RECT[0], Player.SIZE_BODY_RECT[1])
+
+
+        for brock in cls.bricks:
+            if not body.colliderect(brock.rect):
+                continue
+
+            width_rect = body.w * body.w
+            height_rect = body.h * body.h
+
+            radius_player = math.sqrt( width_rect  + height_rect ) / 2.0
+
+            width_block = brock.rect.w * brock.rect.w
+            height_block = brock.rect.h * brock.rect.h
+
+            radius_block = math.sqrt(width_block + height_block) / 2.0
+            radius_sum = radius_block + radius_player
+
+            dx =  brock.rect.right / 2 -( body.right / 2)
+            dy =  brock.rect.bottom / 2 - (body.bottom / 2)
+
+            distance = math.sqrt(dx* dx  + dy*dy )
+            separation = radius_sum - distance
+
+            if body.colliderect(brock.rect):
+                if distance >= radius_sum:
+                    pass
+
+                if distance != 0:
+                    dx /= distance
+                    dy /= distance
+                    player["x"] -= dx * separation * 0.125
+                    player["y"] -= dy  * separation * 0.125
