@@ -178,10 +178,19 @@ class Server:
                         q.put(encoded_message)
 
                     elif data == Struct.FIRE_EVENT_PLAYER:
-                        encoded_message = Struct.pack_event(player_data)
-                        if encoded_message:
-                            q.put(encoded_message)
-
+                        # Instead of instant calculation, spawn a bullet
+                        radian = math.radians(player_data["angle_cannon"])
+                        speed = 5 # Slow speed so players can see it
+                        
+                        new_bullet = {
+                            "id": random.randint(0, 255),
+                            "x": player_data["x"],
+                            "y": player_data["y"],
+                            "vx": -math.sin(radian) * speed,
+                            "vy": -math.cos(radian) * speed,
+                            "life": 120 # Bullet dies after 2 seconds at 60fps
+                        }
+                        self._active_bullets.append(new_bullet)
             except (ConnectionResetError, ConnectionRefusedError, socket.error) as e:
                 logger.error(f"LOG ERROR: {e}")
                 print(f"ERROR IN SOCKET: {e}")
