@@ -14,7 +14,7 @@ class MovementComponent:
         self.network = network
         self.player = player
 
-""" Translates input into movement """
+    """ Translates input into movement """
     def keys(self):
         key = pg.key.get_pressed()
         actions = []
@@ -37,6 +37,6 @@ class MovementComponent:
             action = Struct.RIGHT_ANGLE_EVENT_PLAYER
             actions.append(action)
 
-#network transmission(queues action pressed to be processed on a server if internet connection is present)
+        # network transmission (queues action pressed to be processed on a server if internet connection is present)
         if self.network and len(actions) > 0:
             self.network.send_keys(actions)
