@@ -276,5 +276,14 @@ class Struct:
         except pickle.UnpicklingError as e:
             return data.decode('utf-8')
 
-
-
+    # Add a new status for moving bullets
+    BULLET_MOVE: int = 8 
+    
+    @staticmethod
+    def pack_bullet_position(bullet_id, x, y):
+        # Pack status, unique ID, and coordinates
+        size_data = Struct.pack_single_data(Struct.SIZE_PLAYER)
+        # Using a similar format to UPDATE_PLAYER but for a bullet
+        size_data += struct.pack('BBhhhhb', Struct.BULLET_MOVE, bullet_id, int(x), int(y), 0, 0, 0)
+        return size_data
+    
