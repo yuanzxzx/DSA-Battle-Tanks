@@ -14,7 +14,7 @@ class MovementComponent:
         self.network = network
         self.player = player
 
-""" Translates input into movement """
+""" Translates input into movement. """
     def keys(self):
         key = pg.key.get_pressed()
         actions = []
@@ -30,10 +30,10 @@ class MovementComponent:
         elif key[pg.K_s]:
             action = Struct.DOWN_EVENT_PLAYER
             actions.append(action)
-        if key[pg.K_p]:
+        if key[pg.K_i]:
             action = Struct.LEFT_ANGLE_EVENT_PLAYER
             actions.append(action)
-        elif key[pg.K_i]:
+        elif key[pg.K_p]:
             action = Struct.RIGHT_ANGLE_EVENT_PLAYER
             actions.append(action)
 
