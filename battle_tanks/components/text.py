@@ -21,36 +21,37 @@ class TextComponent:
         """ Render text """
         return pg.font.Font(font,size).render(text,1,color)
 
-
     def update(self):
         """ Updates the surface """
+        center = self._rect.center
         self._surface = self.render(self._text,FONT,self._color, self.size_font)
-
+        self._rect = self._surface.get_rect(center=center)
 
     @property
     def color(self):
         """getter color"""
         return self._color
 
-
     @color.setter
     def color(self,color:Tuple[int,int,int]):
         """color set"""
         self._color = color
+        center = self._rect.center    
         self._surface = self.render(self._text,FONT,self._color, self.size_font)
-
+        self._rect = self._surface.get_rect(center=center)
 
     @property
     def text(self):
         """getting """
         return self._text
-
-
+        
     @text.setter
     def text(self,text):
         """setter """
+        center = self._rect.center
         self._text = text
-
+        self._surface = self.render(self._text,FONT,self._color, self.size_font)
+        self._rect = self._surface.get_rect(center=center)
 
     def draw(self,screen):
         """ draw"""
