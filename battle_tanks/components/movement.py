@@ -31,10 +31,10 @@ class MovementComponent:
             action = Struct.DOWN_EVENT_PLAYER
             actions.append(action)
         if key[pg.K_i]:
-            action = Struct.LEFT_ANGLE_EVENT_PLAYER
+            action = Struct.RIGHT_ANGLE_EVENT_PLAYER
             actions.append(action)
         elif key[pg.K_p]:
-            action = Struct.RIGHT_ANGLE_EVENT_PLAYER
+            action = Struct.LEFT_ANGLE_EVENT_PLAYER
             actions.append(action)
 
         # network transmission (queues action pressed to be processed on a server if internet connection is present)
