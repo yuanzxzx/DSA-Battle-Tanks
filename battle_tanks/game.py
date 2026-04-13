@@ -23,9 +23,13 @@ type_guns = {
 pg.mixer.init()
 SOUND_BOOM = pg.mixer.Sound(ROUTE("assets/sound/boom.wav"))
 SHOT = pg.mixer.Sound(ROUTE("assets/sound/shot.wav"))
+BG_TRACK = pg.mixer.music.load(ROUTE("assets/sound/bg_track.wav"))
+pg.mixer.music.play(-1)
 
 SOUND_BOOM.set_volume(0.1)
 SHOT.set_volume(0.1)
+pg.mixer.music.set_volume(0.5)
+
 
 
 
