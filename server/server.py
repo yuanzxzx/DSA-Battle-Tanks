@@ -351,19 +351,39 @@ class Server:
                                 player["deleted"] = True
                                 q.put(player)
 
-                elif isinstance(data,bytes):
-                    """QUEUE FOR OLD PLAYERS"""
-                    if len(data) in (Struct.BUFFER_SIZE_EVENT_RESPONSE, Struct.SIZE_PLAYER):
-                        # Enviar inmediatamente las actualizaciones de movimiento
+                elif isinstance(data, bytes):
+                    # Existing code handles player moves immediately for responsiveness
+                    if len(data) == Struct.BUFFER_SIZE_EVENT_RESPONSE:
                         for conn in self._sockets:
                             self._executor.submit(send_data, conn, data)
-                    else:
-                        # Para otros tipos de datos, mantener el tick rate
-                        current_time = time.time()
-                        if current_time - self.tick_last_sent >= TICK_RATE:
-                            self.tick_last_sent = current_time
-                            for conn in self._sockets:
-                                self._executor.submit(send_data, conn, Struct.pack_players(self._data))
+                    
+                    # --- ADD BULLET SIMULATION HERE ---
+                    current_time = time.time()
+                    if current_time - self.tick_last_sent >= TICK_RATE:
+                        self.tick_last_sent = current_time
+                        
+                        bullet_updates = b""
+                        for bullet in self._active_bullets[:]: # Iterate over a copy
+                            # Move bullet based on its stored velocity
+                            bullet['x'] += bullet['vx']
+                            bullet['y'] += bullet['vy']
+                            bullet['life'] -= 1
+                            
+                            # Check for collisions using Collision class logic
+                            hit = Collision.check_bullet_at_point(bullet['x'], bullet['y'])
+                            
+                            if hit or bullet['life'] <= 0:
+                                self._active_bullets.remove(bullet)
+                                # If it hit a player/brick, pack that specific event to broadcast
+                                if hit: q.put(hit) 
+                            else:
+                                # Pack the new position to send to everyone
+                                bullet_updates += Struct.pack_bullet_position(bullet['id'], bullet['x'], bullet['y'])
+                
+                        # Broadcast all players AND all bullet positions
+                        game_state = Struct.pack_players(self._data) + bullet_updates
+                        for conn in self._sockets:
+                            self._executor.submit(send_data, conn, game_state)
 
             except (queue.Empty, ConnectionAbortedError) as e:
                 continue
