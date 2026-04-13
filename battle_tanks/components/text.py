@@ -12,6 +12,10 @@ class TextComponent:
         self.size_font = font_size
         self._outline_color = outline_color
         self._text = text
+        
+        self._surface = self.render(self._text, FONT, self._color, self.size_font, self._outline_color)
+        self._rect = self._surface.get_rect()
+        self._rect.center = position
 
     @staticmethod
     def render(text: str, font_path: str, color: Tuple[int, int, int], size: int, outline_color=None):
@@ -34,11 +38,6 @@ class TextComponent:
     
         return outline_surf    
 
-    @staticmethod
-    def render(text:str, font: pg.font, color: Tuple[int,int,int], size):
-        """ Render text """
-        return pg.font.Font(font,size).render(text,1,color)
-
     def update(self):
         """ Updates the surface and maintains centering """
         old_center = self._rect.center
@@ -52,13 +51,12 @@ class TextComponent:
         return self._color
 
     @color.setter
-    def color(self,color:Tuple[int,int,int]):
-        """color set"""
+    def color(self, color: Tuple[int, int, int]):
+        """Update color and maintain centering/outline"""
         self._color = color
-        current_center = self._rect.center
-        self._surface = self.render(self._text,FONT,self._color, self.size_font)
-        self._rect = self._surface.get_rect()
-        self._rect.center = current_center
+        center = self._rect.center
+        self._surface = self.render(self._text, FONT, self._color, self.size_font, self._outline_color)
+        self._rect = self._surface.get_rect(center=center)
 
     @property
     def text(self):
@@ -66,13 +64,14 @@ class TextComponent:
         return self._text
         
     @text.setter
-    def text(self,text):
-        """setter """
+    def text(self, text):
+        """Update text and maintain centering/outline"""
         center = self._rect.center
         self._text = text
-        self._surface = self.render(self._text,FONT,self._color, self.size_font)
+        self._surface = self.render(self._text, FONT, self._color, self.size_font, self._outline_color)
         self._rect = self._surface.get_rect(center=center)
 
     def draw(self,screen):
         """ draw"""
         screen.blit(self._surface,self._rect)
+
