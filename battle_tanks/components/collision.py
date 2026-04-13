@@ -207,3 +207,21 @@ class Collision:
                     dy /= distance
                     player["x"] -= dx * separation * 0.125
                     player["y"] -= dy  * separation * 0.125
+
+    @classmethod
+    def check_moving_bullet(cls, x: float, y: float, collision_radius: int = 10) -> dict:
+        for brick in list(cls.bricks):
+            target_pos = brick.rect.center
+            distance = math.sqrt((x - target_pos[0]) ** 2 + (y - target_pos[1]) ** 2)
+            
+            if distance <= collision_radius:
+                if isinstance(brick, Brick):
+                    # Breakable brick
+                    if brick.data in cls.game_state:
+                        cls.game_state = cls.game_state.replace(brick.data, b"")
+                    cls.bricks.remove(brick)
+                    return {"type": 5, "x": brick.rect.x, "y": brick.rect.y, "w": brick.rect.w, "h": brick.rect.h}
+                elif isinstance(brick, Block):
+                    # Indestructible block - just stop the bullet!
+                    return {"type": 6, "x": brick.rect.x, "y": brick.rect.y, "w": brick.rect.w, "h": brick.rect.h}
+        return {}
