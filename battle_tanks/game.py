@@ -148,14 +148,13 @@ class Game:
                         player.name = recv.get("name", f"Player {position}")  # Establecer el nombre del jugador
                         self.players[position] = player
 
+                # In battle_tanks/game.py inside the update() method
                 elif recv.get("status") == Struct.BROKE_BRICK:
                     brick_rect = pg.Rect(recv["x"], recv["y"], recv["w"], recv["h"])
                     sprite_brick = find_sprite(brick_rect, self._bricks)
                     if sprite_brick:
-                        self._bricks.remove(sprite_brick)
+                        sprite_brick.kill() # This removes it from self._bricks group locally
                         SOUND_BOOM.play()
-                        self.camera.shake()
-                        sprite_brick.kill()
 
                 elif recv.get("status") == Struct.BLOCK:
                     Brick.boom() #Change for Block sound
