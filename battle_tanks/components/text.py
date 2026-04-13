@@ -8,7 +8,7 @@ class TextComponent:
 
     """Surface for text rendering """
     def __init__(self, position, text, color=None, font_size=32, outline_color=None):
-        self._color = color if color is not None else (255, 0, 0)
+        self._color = color if color is not None else (160, 0, 0)
         self.size_font = font_size
         self._outline_color = outline_color
         self._text = text
