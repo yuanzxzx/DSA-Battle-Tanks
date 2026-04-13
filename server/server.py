@@ -362,22 +362,20 @@ class Server:
                         
                         bullet_updates = b""
                         for bullet in self._active_bullets[:]: # Iterate over a copy
-                            # Move bullet based on its stored velocity
+                            # Move the bullet based on its stored velocity
                             bullet['x'] += bullet['vx']
                             bullet['y'] += bullet['vy']
                             bullet['life'] -= 1
                             
                             # Check for collisions using Collision class logic
-                            hit = Collision.check_bullet_at_point(bullet['x'], bullet['y'])
+                            hit = Collision.check_moving_bullet(bullet['x'], bullet['y'])
                             
                             if hit or bullet['life'] <= 0:
                                 self._active_bullets.remove(bullet)
-                                # If it hit a player/brick, pack that specific event to broadcast
-                                if hit: q.put(hit) 
-                            else:
-                                # Pack the new position to send to everyone
-                                bullet_updates += Struct.pack_bullet_position(bullet['id'], bullet['x'], bullet['y'])
-                
+                                if hit: 
+                                    # Correctly pack the event into bytes so _receive() routes it properly
+                                    q.put(Struct.pack_tile(hit))
+                    
                         # Broadcast all players AND all bullet positions
                         game_state = Struct.pack_players(self._data) + bullet_updates
                         for conn in self._sockets:
