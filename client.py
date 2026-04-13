@@ -96,7 +96,7 @@ def main():
     pg.display.set_caption(f"Battle Tank")
     pg.display.set_icon(pg.image.load(ROUTE("lemon.ico")))
     pg.font.init()
-    pg.event.set_allowed([
+    pg.event.set_allowed
     clock = pg.time.Clock()
     WIDTH,HEIGHT = 800, 600
     SCREEN = pg.display.set_mode((WIDTH,HEIGHT + 36))
