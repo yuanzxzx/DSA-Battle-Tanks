@@ -160,30 +160,30 @@ class Collision:
 
     @classmethod
     def collide_with_objects(cls,player: dict):
-       # In battle_tanks/components/collision.py
+        pass
 
-@classmethod
-def check_collision_bullet(cls, player_data: dict, collision_radius: int) -> dict:
-    # ... (existing bullet trajectory logic) ...
-    for brick in list(cls.bricks): # Use a list copy to safely remove during iteration
-        target_pos = brick.rect.center
-        distance = math.sqrt((bullet_pos[0] - target_pos[0]) ** 2 +
-                             (bullet_pos[1] - target_pos[1]) ** 2)
+    @classmethod
+    def check_collision_bullet(cls, player_data: dict, collision_radius: int) -> dict:
+        # ... (existing bullet trajectory logic) ...
+        for brick in list(cls.bricks): # Use a list copy to safely remove during iteration
+            target_pos = brick.rect.center
+            distance = math.sqrt((bullet_pos[0] - target_pos[0]) ** 2 +
+                                (bullet_pos[1] - target_pos[1]) ** 2)
         
-        if distance <= collision_radius:
-            if isinstance(brick, Brick):
-                # 1. Remove from the network game state (for new players joining)
-                if brick.data in cls.game_state:
-                    cls.game_state = cls.game_state.replace(brick.data, b"")
+            if distance <= collision_radius:
+                if isinstance(brick, Brick):
+                    # 1. Remove from the network game state (for new players joining)
+                    if brick.data in cls.game_state:
+                        cls.game_state = cls.game_state.replace(brick.data, b"")
                 
-                # 2. THE FIX: Remove from the physics group
-                cls.bricks.remove(brick) 
+                    # 2. THE FIX: Remove from the physics group
+                    cls.bricks.remove(brick) 
                 
-                return {
-                    "type": 5, # Struct.BRICK
-                    "x": brick.rect.x,
-                    "y": brick.rect.y,
-                    "w": brick.rect.w,
-                    "h": brick.rect.h,
-                }
-    return {}
+                    return {
+                        "type": 5, # Struct.BRICK
+                        "x": brick.rect.x,
+                        "y": brick.rect.y,
+                        "w": brick.rect.w,
+                        "h": brick.rect.h,
+                    }
+        return {}
