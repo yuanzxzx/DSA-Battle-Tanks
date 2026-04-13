@@ -61,15 +61,15 @@ class NetworkComponent:
         """
 
         if data_arr[0] in Struct.STATUS_PLAYER:
-            return {
-                "status": data_arr[0],
-                "position": data_arr[1],
-                "x": data_arr[2],
-                "y": data_arr[3],
-                "angle": data_arr[4],
-                "angle_cannon": data_arr[5],
-                "damage_indicator": data_arr[6]
-            }
+        return {
+            "status": data_arr[0],
+            "id": data_arr[1], # Bullet ID
+            "x": data_arr[2],
+            "y": data_arr[3],
+            "angle": data_arr[4],
+            "angle_cannon": data_arr[5],
+            "damage_indicator": data_arr[6]
+        }
 
         elif data_arr[0] == Struct.BROKE_BRICK:
             return {
