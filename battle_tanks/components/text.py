@@ -12,10 +12,6 @@ class TextComponent:
         self.size_font = font_size
         self._outline_color = outline_color
         self._text = text
-        
-        self._surface = self.render(self._text, FONT, self._color, self.size_font, self._outline_color)
-        self._rect = self._surface.get_rect()
-        self._rect.center = position
 
     @staticmethod
     def render(text: str, font_path: str, color: Tuple[int, int, int], size: int, outline_color=None):
