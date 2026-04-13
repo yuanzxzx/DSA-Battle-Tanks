@@ -177,10 +177,7 @@ class Server:
                     elif data == Struct.FIRE_EVENT_PLAYER:
                         encoded_message = Struct.pack_event(player_data)
                         if encoded_message:
-                            if len(encoded_message) == Struct.SIZE_PLAYER:
-                                q.put(Struct.OK_MESSAGE + encoded_message)
-                            else:
-                                q.put(encoded_message)
+                            q.put(encoded_message)
 
             except (ConnectionResetError, ConnectionRefusedError, socket.error) as e:
                 logger.error(f"LOG ERROR: {e}")
@@ -353,7 +350,7 @@ class Server:
 
                 elif isinstance(data,bytes):
                     """QUEUE FOR OLD PLAYERS"""
-                    if len(data) == Struct.BUFFER_SIZE_EVENT_RESPONSE:
+                    if len(data) in (Struct.BUFFER_SIZE_EVENT_RESPONSE, Struct.SIZE_PLAYER):
                         # Enviar inmediatamente las actualizaciones de movimiento
                         for conn in self._sockets:
                             self._executor.submit(send_data, conn, data)
