@@ -36,10 +36,10 @@ class Menu:
             #     "text_draw": Text((200,100),"TESTING MODE", font_size=45, color=NEU),
             #     "action": "SINGLE_PLAYER_MODE"
             # },
-            2:{
-                "text_draw": TextComponent((300,250),"MULTIPLAYER MODE", font_size=45, color=NEU),
-                "action": "MULTIPLAYER_MODE"
-            },
+            # 2:{
+            #    "text_draw": TextComponent((300,250),"MULTIPLAYER MODE", font_size=45, color=NEU),
+            #    "action": "MULTIPLAYER_MODE"
+           # },
         }
 
 
