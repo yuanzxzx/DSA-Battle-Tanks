@@ -107,6 +107,7 @@ def main():
     main_game = pg.Surface((WIDTH,HEIGHT))
     menu = Menu(SCREEN)
     game = menu.update(main_game)
+    menu.select_option = True
     text_damage = TextComponent((WIDTH//2,HEIGHT +16 ),f"Damage: {game.damage} %")
     bullets = pg.Surface((WIDTH,36))
 
