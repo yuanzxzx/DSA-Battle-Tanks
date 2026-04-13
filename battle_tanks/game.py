@@ -172,7 +172,14 @@ class Game:
     def draw(self, main_screen: pg.Surface):
         """ Draw the player and scene. """
         self.SCREEN.blit(self.tile_image,self.camera.apply_rect(self.tile_rect))
-
+        from battle_tanks.commons.tank_surface import draw_bullet # Make sure to import this
+        
+        for bx, by in self.server_bullets:
+            bullet_surface = pg.Surface((4, 10), pg.SRCALPHA)
+            draw_bullet(bullet_surface, (0,0), 0, (4,10))
+            # Apply camera offset so they scroll correctly with the map
+            bullet_rect = pg.Rect(bx, by, 4, 10)
+            self.SCREEN.blit(bullet_surface, self.camera.apply_rect(bullet_rect))
         for _,player in self.players.items():
             # Dibujar el tanque
             tank_rect = self.camera.apply(player)
