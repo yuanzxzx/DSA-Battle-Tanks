@@ -27,7 +27,7 @@ class Menu:
         self.angle_cannon = 0
 
         # Load background image
-        self.background_image = pg.image.load(ROUTE('assets/images/camo_bg.png')).convert()
+        self.background_image = pg.image.load(ROUTE('assets/images/camo shi.jpg')).convert()
         # Scale to fit the screen
         self.background_image = pg.transform.scale(self.background_image, (self.main_surface.get_width(), self.main_surface.get_height()))
     
@@ -36,10 +36,10 @@ class Menu:
             #     "text_draw": Text((200,100),"TESTING MODE", font_size=45, color=NEU),
             #     "action": "SINGLE_PLAYER_MODE"
             # },
-            # 2:{
-            #    "text_draw": TextComponent((300,250),"MULTIPLAYER MODE", font_size=45, color=NEU),
-            #    "action": "MULTIPLAYER_MODE"
-           # },
+            2:{
+                "text_draw": TextComponent((300,250),"MULTIPLAYER MODE", font_size=45, color=NEU),
+                "action": "MULTIPLAYER_MODE"
+            },
         }
 
 
@@ -259,4 +259,3 @@ class Menu:
 
             op_draw.update()
             op_draw.draw(self.main_surface)
-
