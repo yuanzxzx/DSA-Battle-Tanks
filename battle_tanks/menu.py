@@ -27,7 +27,7 @@ class Menu:
         self.angle_cannon = 0
 
         # Load background image
-        self.background_image = pg.image.load(ROUTE('assets/images/camo_bg.jpg')).convert()
+        self.background_image = pg.image.load(ROUTE('assets/images/camo_bg.png')).convert()
         # Scale to fit the screen
         self.background_image = pg.transform.scale(self.background_image, (self.main_surface.get_width(), self.main_surface.get_height()))
     
