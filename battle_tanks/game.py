@@ -111,9 +111,14 @@ class Game:
         """ SEND MOVES BYTES """
         self.move.keys()
         """ MOVES RESPONSE """
-
+        self.server_bullets = []
+        
         if self.network:
             recv_all:List[dict] = self.network.recv_to_queue()
+            for recv in recv_all:
+                if recv.get("status") == Struct.BULLET_MOVE:
+                    # Store the bullet coordinates sent by the server for this frame
+                    self.server_bullets.append((recv["x"], recv["y"]))
 
             for recv in recv_all:
                 if (recv.get("status") == Struct.NEW_PLAYER or
