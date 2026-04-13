@@ -96,15 +96,13 @@ def main():
     pg.display.set_caption(f"Battle Tank")
     pg.display.set_icon(pg.image.load(ROUTE("lemon.ico")))
     pg.font.init()
-    pg.event.set_allowed([
-        pg.QUIT,
-        pg.KEYDOWN,
-        pg.KEYUP,
-    ])
-
+    pg.event.set_allowed
     clock = pg.time.Clock()
     WIDTH,HEIGHT = 800, 600
-    SCREEN = pg.display.set_mode((WIDTH,HEIGHT + 36))
+    SCREEN = pg.display.set_mode((WIDTH,HEIGHT + 60))
+    hud_bg = pg.image.load(ROUTE("assets/images/hud_bg.png")).convert_alpha()
+    hud_bg = pg.transform.scale(hud_bg, (WIDTH, 60))
+
 
     main_game = pg.Surface((WIDTH,HEIGHT))
     menu = Menu(SCREEN)
@@ -142,7 +140,7 @@ def main():
         game.update()
         game.draw(SCREEN)
 
-        bullets.fill((0,50,0))
+        bullets.blit(hud_bg, (0, 0))
         game.player.type_gun.render(bullets)
         SCREEN.blit(bullets,(0,HEIGHT))
 
