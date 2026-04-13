@@ -32,6 +32,7 @@ class Brick(SpriteBasic):
         super().__init__(x_pos,y_pos,width,height)
         self.box_img = pg.image.load(ROUTE("assets/images/tiles.png"))
         self.image = self.box_img.subsurface((0,0),(32,32))
+        self.mask = pg.mask.from_surface(self.image)
 
 
 class Block(SpriteBasic):
