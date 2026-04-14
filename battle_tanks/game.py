@@ -47,10 +47,12 @@ class Game:
     def __init__(self,
                  addr:Union[Tuple[str,int], None],
                  screen:pg.Surface,
-                 player_name="John"):
+                 player_name="John",
+                 tank_color:int=0):
 
         self.network = NetworkComponent(addr,player_name) if addr is not None else None
         self._player_number = self.network.player_number if addr is not None else 0
+        self.tank_color = tank_color
         self.positions = {}
 
 
@@ -76,7 +78,7 @@ class Game:
         else:
             position = (0,0)
 
-        self.player = Player(position, self._player_number, cannon_type=type_guns.get("MEDIUM"))
+        self.player = Player(position, self._player_number, cannon_type=type_guns.get("MEDIUM"), tank_color=tank_color)
         self.players[self._player_number] = self.player
         self.camera = CameraComponent(self.tile.WIDTH, self.tile.HEIGHT, (self.WIDTH, self.HEIGHT))
         self.move = MovementComponent(self.network, self.player)
@@ -215,7 +217,7 @@ class Game:
         for _,player in self.players.items():
             # Dibujar el tanque
             tank_rect = self.camera.apply(player)
-            tank_cover(player.player_number, tank_rect, self.SCREEN, angle=player.angle,
+            tank_cover(player.tank_color, tank_rect, self.SCREEN, angle=player.angle,
                        angle_cannon=player.angle_cannon)
             
             if getattr(player, "laser_active", False):
