@@ -65,7 +65,7 @@ class Collision:
                     if isinstance(brick, Brick):
                         list_game_state: List[bytes] = cls.game_state.split(brick.data)
                         cls.game_state = b"".join(map(bytes, list_game_state))
-                        brick.remove(cls.bricks)
+                        brick.kill()
                         return {
                             "type":5,
                             "x": brick.rect.x,
@@ -159,11 +159,9 @@ class Collision:
         cls.players.append(player)
 
     @classmethod
-    def collide_with_objects(cls,player: dict):
-        """
-        COLLIDE WITH X AND Y SIZE
-        """
-        if player["x"] <= 0:
+    def collide_with_objects(cls, player: dict):
+        # 1. Screen Boundary Checks
+        if player["x"] = 0:
             player["x"] = 0
         elif player["x"] + Player.SIZE_BODY_RECT[0] >= cls.size_screen[0]:
             player["x"] = cls.size_screen[0] - Player.SIZE_BODY_RECT[0]
@@ -171,39 +169,35 @@ class Collision:
         if player["y"] <= 0:
             player["y"] = 0
         elif player["y"] + Player.SIZE_BODY_RECT[1] >= cls.size_screen[1]:
-            player["y"] = player["y"] - Player.SIZE_BODY_RECT[1]
+            player["y"] = cls.size_screen[1] - Player.SIZE_BODY_RECT[1]
 
-
+        # 2. Create the tank's bounding box
         body = pg.Rect(player["x"], player["y"], Player.SIZE_BODY_RECT[0], Player.SIZE_BODY_RECT[1])
 
-
-        for brock in cls.bricks:
+        # 3. Check against all remaining blocks
+        for brock in list(cls.bricks):
             if not body.colliderect(brock.rect):
                 continue
+            # Standard Rectangle (AABB) Collision Resolution
+            # Calculate how deeply the tank pushed into each side of the wall
+            overlap_left = brock.rect.right - body.left
+            overlap_right = body.right - brock.rect.left
+            overlap_top = brock.rect.bottom - body.top
+            overlap_bottom = body.bottom - brock.rect.top
 
-            width_rect = body.w * body.w
-            height_rect = body.h * body.h
+            # Find the smallest overlap (this tells us which face of the wall we hit)
+            min_overlap = min(overlap_left, overlap_right, overlap_top, overlap_bottom)
 
-            radius_player = math.sqrt( width_rect  + height_rect ) / 2.0
+            # Snap the player perfectly against the flat edge
+            if min_overlap == overlap_left:
+                player["x"] = brock.rect.right
+            elif min_overlap == overlap_right:
+                player["x"] = brock.rect.left - body.width
+            elif min_overlap == overlap_top:
+                player["y"] = brock.rect.bottom
+            elif min_overlap == overlap_bottom:
+                player["y"] = brock.rect.top - body.height
 
-            width_block = brock.rect.w * brock.rect.w
-            height_block = brock.rect.h * brock.rect.h
-
-            radius_block = math.sqrt(width_block + height_block) / 2.0
-            radius_sum = radius_block + radius_player
-
-            dx =  brock.rect.right / 2 -( body.right / 2)
-            dy =  brock.rect.bottom / 2 - (body.bottom / 2)
-
-            distance = math.sqrt(dx* dx  + dy*dy )
-            separation = radius_sum - distance
-
-            if body.colliderect(brock.rect):
-                if distance >= radius_sum:
-                    pass
-
-                if distance != 0:
-                    dx /= distance
-                    dy /= distance
-                    player["x"] -= dx * separation * 0.125
-                    player["y"] -= dy  * separation * 0.125
+            # Update the body rect immediately so the next block check is accurate
+            body.x = player["x"]
+            body.y = player["y"]
