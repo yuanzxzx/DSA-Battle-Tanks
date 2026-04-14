@@ -1,6 +1,7 @@
 """ This is the Player [Tank] """
 import math
 import os
+import time
 import pygame as pg
 from .cannon import Cannon
 from battle_tanks.commons.municion import CannonType
@@ -17,6 +18,12 @@ class Player(Cannon):
     SIZE_BODY_RECT = (32,32)
     DAMAGE =  10
     MAX_DAMAGE = 100
+
+    self.bullets_fired_in_burst = 0
+    self.last_burst_time = 0
+    self.burst_cooldown = 15.0
+    self.last_shot_time = 0
+    self.fire_rate_delay = 0.2
 
 
     TELESCOPIC_SIGH = pg.image.load(os.path.join(os.path.abspath("."), "assets/images/telescopic_sight.png"))

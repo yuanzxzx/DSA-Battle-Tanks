@@ -10,7 +10,7 @@ from battle_tanks.components.movement import MovementComponent
 from battle_tanks.components.tile_map import TileMap
 from battle_tanks.components.camera import CameraComponent
 from battle_tanks.sprites import Player, Brick
-from battle_tanks.sprites.elements import Bullet
+from battle_tanks.sprites.bullet import Bullet
 from battle_tanks.commons.municion import CannonType
 from battle_tanks.commons.tank_surface import tank_cover
 from battle_tanks.components.network import NetworkComponent
@@ -89,25 +89,33 @@ class Game:
             if data_sprite[0] == Struct.BRICK:
                 brick = Brick(data_sprite[1],data_sprite[2],data_sprite[3],data_sprite[4])
                 self._bricks.add(brick)
-
+                Collision.bricks.add(brick)  # Also add to collision system
 
     def update(self):
         """ Update Game"""
 
-        for key,player in self.players.items():
+        for key, player in self.players.items():
             if player.fire:
                 SHOT.play()
-                
-                import math
-                radian_angle = math.radians(player.angle_cannon)
-                start_x = player.rect.centerx + math.sin(radian_angle) * -30
-                start_y = player.rect.centery + math.cos(radian_angle) * -30
-                self._bullets.add(Bullet(start_x, start_y, player.angle_cannon))
-                
                 player.fire = False
+                # Spawn bullet from cannon position
+                bullet_start_pos = player.rect_cannon.center
+                bullet = Bullet(bullet_start_pos, player.angle_cannon)
+                self._bullets.add(bullet)
 
-        self._bullets.update()
+        self._bullets.update(self.tile_rect)
 
+        # Check bullet collisions with bricks (destructible objects)
+        for bullet in self._bullets:
+            hit_bricks = pg.sprite.spritecollide(bullet, self._bricks, False,)
+            if hit_bricks:
+                for brick in hit_bricks:
+                    self._bricks.remove(brick)
+                    Collision.bricks.remove(brick)
+                    SOUND_BOOM.play()
+                    brick.kill()
+                bullet.kill()
+                
         """ SEND MOVES BYTES """
         self.move.keys()
         """ MOVES RESPONSE """
@@ -126,10 +134,6 @@ class Game:
                 elif recv.get("status") in (Struct.UPDATE_PLAYER, Struct.PLAYER_SHOT):
                     position = recv["position"]
                     
-                    if recv.get("status") == Struct.PLAYER_SHOT:
-                        self.camera.shake()
-                        SOUND_BOOM.play()
-
                     if self.players.get(position):
                         player = self.players[position]
 
@@ -139,26 +143,37 @@ class Game:
                         player.body_rect.x = player.rect.x
                         player.body_rect.y = player.rect.y
 
+                        player.rect_cannon.center = player.body_rect.center
+
                         player.angle = recv["angle"]
                         player.angle_cannon = recv["angle_cannon"]
                         player.damage = recv["damage_indicator"]
+                        
+                        player.laser_active = recv.get("laser_active", getattr(player, "laser_active", False))
+
+                    
 
                     else:
                         player = Player((recv["x"], recv["y"]), position, cannon_type=type_guns.get("BASIC"))
                         player.name = recv.get("name", f"Player {position}")  # Establecer el nombre del jugador
                         self.players[position] = player
 
-                # In battle_tanks/game.py inside the update() method
                 elif recv.get("status") == Struct.BROKE_BRICK:
                     brick_rect = pg.Rect(recv["x"], recv["y"], recv["w"], recv["h"])
                     sprite_brick = find_sprite(brick_rect, self._bricks)
                     if sprite_brick:
-                        sprite_brick.kill() # This removes it from self._bricks group locally
+                        self._bricks.remove(sprite_brick)
                         SOUND_BOOM.play()
+                        self.camera.shake()
+                        sprite_brick.kill()
+                        
+                    # Also remove from collision system
+                    collision_brick = find_sprite(brick_rect, Collision.bricks)
+                    if collision_brick:
+                        Collision.bricks.remove(collision_brick)
 
                 elif recv.get("status") == Struct.BLOCK:
                     Brick.boom() #Change for Block sound
-                    self.camera.shake()
 
 
         self.camera.update(self.player)
@@ -168,41 +183,66 @@ class Game:
         """ Draw the player and scene. """
         self.SCREEN.blit(self.tile_image,self.camera.apply_rect(self.tile_rect))
 
+        for bullet in self._bullets:
+            self.SCREEN.blit(bullet.image, self.camera.apply(bullet))
+
         for _,player in self.players.items():
             # Dibujar el tanque
             tank_rect = self.camera.apply(player)
             tank_cover(player.player_number, tank_rect, self.SCREEN, angle=player.angle,
                        angle_cannon=player.angle_cannon)
             
+            if getattr(player, "laser_active", False):
+                import math
+                rad_angle = math.radians(-player.angle_cannon - 90)
+                
+                barrel_offset = 20 
+                start_pos = (
+                    tank_rect.centerx + barrel_offset * math.cos(rad_angle),
+                    tank_rect.centery + barrel_offset * math.sin(rad_angle)
+                )
+                
+                end_pos = (start_pos[0] + 300 * math.cos(rad_angle), 
+                           start_pos[1] + 300 * math.sin(rad_angle))
+                
+                pg.draw.line(self.SCREEN, (255, 50, 50), start_pos, end_pos, 5)
+                pg.draw.line(self.SCREEN, (255, 255, 255), start_pos, end_pos, 2) 
+
             # Dibujar el nombre del jugador
-            font = pg.font.Font(None, 24)  # Crear una fuente
-            text_surface = font.render(player.name, True, (255, 255, 255))  # Texto blanco
+            font = pg.font.Font(None, 24)  
+            text_surface = font.render(player.name, True, (255, 255, 255))  
             text_rect = text_surface.get_rect()
             
-            # Posicionar el texto encima del tanque
             text_rect.centerx = tank_rect.centerx
-            text_rect.bottom = tank_rect.top - 5  # 5 píxeles arriba del tanque
-            
-            # Dibujar el texto
+            text_rect.bottom = tank_rect.top - 5  
             self.SCREEN.blit(text_surface, text_rect)
 
             # Dibujar la barra de vida
-            health_width = 50  # Ancho de la barra de vida
-            health_height = 5  # Alto de la barra de vida
+            health_width = 50  
+            health_height = 5  
             health_x = tank_rect.centerx - health_width // 2
-            health_y = text_rect.bottom + 2  # 2 píxeles debajo del nombre
+            health_y = text_rect.bottom + 2  
 
-            # Barra de vida base (gris)
             pg.draw.rect(self.SCREEN, (100, 100, 100), 
                         (health_x, health_y, health_width, health_height))
             
-            # Calcular el ancho de la barra de vida actual
             health_percentage = 1 - (player.damage / Player.MAX_DAMAGE)
             current_health_width = int(health_width * health_percentage)
             
-            # Barra de vida actual (roja)
             pg.draw.rect(self.SCREEN, (255, 0, 0), 
                         (health_x, health_y, current_health_width, health_height))
+
+            if player.player_number == self._player_number:
+                energy_y = health_y + health_height + 2 
+                
+                pg.draw.rect(self.SCREEN, (50, 50, 50), 
+                            (health_x, energy_y, health_width, health_height))
+                
+                current_energy = getattr(player, "laser_energy", 100)
+                current_energy_width = int(health_width * (current_energy / 100))
+                
+                pg.draw.rect(self.SCREEN, (0, 255, 255), 
+                            (health_x, energy_y, current_energy_width, health_height))
 
         for brick in self._bricks:
             self.SCREEN.blit(brick.image,self.camera.apply(brick))
