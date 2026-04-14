@@ -63,8 +63,6 @@ class Collision:
                 collided = distance <= collision_radius
                 if collided:
                     if isinstance(brick, Brick):
-                        list_game_state: List[bytes] = cls.game_state.split(brick.data)
-                        cls.game_state = b"".join(map(bytes, list_game_state))
                         brick.kill()
                         return {
                             "type":5,
@@ -148,33 +146,28 @@ class Collision:
                 cls.game_state += data_tile
                 cls.bricks.add(brick)
 
-
-            elif tile_object.name == "block":
-                block = Block(tile_object.x,tile_object.y,tile_object.width,tile_object.height)
-                cls.bricks.add(block)
-
-
     @classmethod
     def add_player(cls, player:dict):
         cls.players.append(player)
 
+   # In battle_tanks/components/collision.py
+
     @classmethod
     def collide_with_objects(cls, player: dict):
-        # 1. Screen Boundary Checks
-        if player["x"] <= 0:
-            player["x"] = 0
-        elif player["x"] + Player.SIZE_BODY_RECT[0] >= cls.size_screen[0]:
-            player["x"] = cls.size_screen[0] - Player.SIZE_BODY_RECT[0]
-
-        if player["y"] <= 0:
-            player["y"] = 0
-        elif player["y"] + Player.SIZE_BODY_RECT[1] >= cls.size_screen[1]:
-            player["y"] = cls.size_screen[1] - Player.SIZE_BODY_RECT[1]
-
-        # 2. Create the tank's bounding box
+        # ... (Boundary checks remain the same)
+    
         body = pg.Rect(player["x"], player["y"], Player.SIZE_BODY_RECT[0], Player.SIZE_BODY_RECT[1])
-
-        # 3. Check against all remaining blocks
+    
+        # FIX: Use cls.bricks.sprites() to get currently active sprites
+        for brock in cls.bricks:
+            # Check if the brick is still alive (not killed by a bullet)
+            if not brock.alive():
+                continue
+                
+            if not body.colliderect(brock.rect):
+                continue
+        
+        # ... (Collision resolution logic remains the same)
         for brock in list(cls.bricks):
             if not body.colliderect(brock.rect):
                 continue

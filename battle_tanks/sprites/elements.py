@@ -1,5 +1,6 @@
 import pygame as pg
 import math
+import random
 from battle_tanks import ROUTE
 
 
@@ -60,3 +61,32 @@ class Bullet(pg.sprite.Sprite):
         if self.distance_traveled >= self.max_distance:
             self.kill()
 
+class Particle(pg.sprite.Sprite):
+    def __init__(self, x, y, color=(150, 75, 0)): # Default color is a brick-like brown
+        super().__init__()
+        
+        # Randomize the size of each piece of debris
+        size = random.randint(3, 8)
+        self.image = pg.Surface((size, size))
+        self.image.fill(color)
+        self.rect = self.image.get_rect(center=(x, y))
+        
+        # Randomize velocity (an "explosion" scatters in all directions)
+        self.vx = random.uniform(-4, 4)
+        self.vy = random.uniform(-4, 4)
+        
+        # Lifespan: How many frames the particle exists before vanishing
+        self.lifetime = random.randint(15, 30)
+
+    def update(self):
+        # Move the particle
+        self.rect.x += self.vx
+        self.rect.y += self.vy
+        
+        # Add a tiny bit of "gravity" or friction if you want (optional)
+        self.vy += 0.2 
+        
+        # Decrease lifespan
+        self.lifetime -= 1
+        if self.lifetime <= 0:
+            self.kill() # Remove from all Sprite Groups
