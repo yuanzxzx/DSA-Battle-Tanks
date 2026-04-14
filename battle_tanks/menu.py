@@ -62,6 +62,10 @@ class Menu:
         enter_label = TextComponent((center_x, 340), "ENTER", status, font_size=36)
         enter_label.update()
         enter_rect = enter_label._rect.inflate(30, 18)
+        
+        # Cursor blink indicator
+        cursor_blink_time = 0
+        cursor_blink_interval = 500  # milliseconds
 
         while True:
             for event in pg.event.get():
@@ -144,6 +148,10 @@ class Menu:
                         except ValueError:
                             status = RED_STATUS
 
+            # Update cursor blink state
+            cursor_blink_time += self.clock.get_time()
+            show_cursor = (cursor_blink_time // cursor_blink_interval) % 2 == 0
+
             self.main_surface.blit(self.background_image, (0, 0))
 
             title = TextComponent((self.main_surface.get_width() // 2, 40), "BATTLE TANKS", font_size=60, color=(255, 255, 255))
@@ -174,14 +182,26 @@ class Menu:
             text_input = TextComponent((input_padding + 5, input_height // 2), user_text, (255, 255, 255), font_size=30)
             text_input._rect = text_input._surface.get_rect(midleft=(input_padding, input_height // 2))
             text_input.draw(surface_input_port)
+            # Draw cursor for port field if active
+            if option_select == 0 and show_cursor:
+                cursor_x = text_input._rect.right + 5
+                pg.draw.line(surface_input_port, (255, 255, 255), (cursor_x, 8), (cursor_x, input_height - 8), 2)
 
             text_input_ip = TextComponent((input_padding + 5, input_height // 2), ip_text, (255, 255, 255), font_size=30)
             text_input_ip._rect = text_input_ip._surface.get_rect(midleft=(input_padding, input_height // 2))
             text_input_ip.draw(surface_input_ip)
+            # Draw cursor for IP field if active
+            if option_select == 1 and show_cursor:
+                cursor_x = text_input_ip._rect.right + 5
+                pg.draw.line(surface_input_ip, (255, 255, 255), (cursor_x, 8), (cursor_x, input_height - 8), 2)
 
             text_input_name = TextComponent((input_padding + 5, input_height // 2), name, (255, 255, 255), font_size=30)
             text_input_name._rect = text_input_name._surface.get_rect(midleft=(input_padding, input_height // 2))
             text_input_name.draw(surface_input_name)
+            # Draw cursor for name field if active
+            if option_select == 2 and show_cursor:
+                cursor_x = text_input_name._rect.right + 5
+                pg.draw.line(surface_input_name, (255, 255, 255), (cursor_x, 8), (cursor_x, input_height - 8), 2)
 
             self.main_surface.blit(surface_input_name, name_rect.topleft)
             self.main_surface.blit(surface_input_ip, ip_rect.topleft)
