@@ -4,6 +4,7 @@
 import sys
 from typing import Tuple, Dict, Union, List
 import pygame as pg
+import random
 
 from battle_tanks.sprites.elements import Particle
 from battle_tanks.commons.package import Struct, Collision
