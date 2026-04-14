@@ -119,7 +119,7 @@ class Menu:
                                     if len(user_text) > 0 and len(name) > 0:
                                         check_name = NetworkComponent.check_name((ip_text, int(user_text)), name)
                                         if check_name:
-                                            game = Game((ip_text, int(user_text)), game_screen, name)
+                                            game = Game((ip_text, int(user_text)), game_screen, name, self.selected_tank_color)
                                             if game.network.player_data != Struct.USER_NOT_AVAILABLE:
                                                 return game
                                         else:
@@ -139,7 +139,7 @@ class Menu:
                                 if len(user_text) > 0 and len(name) > 0:
                                     check_name = NetworkComponent.check_name((ip_text, int(user_text)), name)
                                     if check_name:
-                                        game = Game((ip_text, int(user_text)), game_screen, name)
+                                        game = Game((ip_text, int(user_text)), game_screen, name, self.selected_tank_color)
                                         if game.network.player_data != Struct.USER_NOT_AVAILABLE:
                                             return game
                                     else:
@@ -164,7 +164,7 @@ class Menu:
                             if len(user_text) > 0 and len(name) > 0:
                                 check_name = NetworkComponent.check_name((ip_text, int(user_text)), name)
                                 if check_name:
-                                    game = Game((ip_text, int(user_text)), game_screen, name)
+                                    game = Game((ip_text, int(user_text)), game_screen, name, self.selected_tank_color)
                                     if game.network.player_data != Struct.USER_NOT_AVAILABLE:
                                         return game
                                 else:
@@ -374,7 +374,7 @@ class Menu:
 
     def single_local_mode(self) -> Game:
         """ Single local game """
-        return Game(None, self.main_surface, "John")
+        return Game(None, self.main_surface, "John", self.selected_tank_color)
 
 
     def update(self, main_game) -> Game:
