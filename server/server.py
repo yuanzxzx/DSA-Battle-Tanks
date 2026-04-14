@@ -180,6 +180,15 @@ class Server:
                     elif data == Struct.FIRE_EVENT_PLAYER:
                         # no instant bullet
                         pass
+
+                    elif data == Struct.LASER_ON_EVENT:
+                        player_data["laser_active"] = True
+                        q.put(Struct.pack_player(Struct.UPDATE_PLAYER, player_data))
+
+                    elif data == Struct.LASER_OFF_EVENT:
+                        player_data["laser_active"] = False
+                        q.put(Struct.pack_player(Struct.UPDATE_PLAYER, player_data))
+                        
             except (ConnectionResetError, ConnectionRefusedError, socket.error) as e:
                 logger.error(f"LOG ERROR: {e}")
                 print(f"ERROR IN SOCKET: {e}")
