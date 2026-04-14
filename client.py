@@ -65,9 +65,10 @@ from battle_tanks.menu import Menu
 #         return x, y
 
 
+# --- Suggestion 2: Burst Fire Function ---
 def handle_burst_fire(game, menu):
     """
-    Handles single tap shooting and hold-to-burst (5 bullets) with a 15s cooldown.
+    Handles rapid-fire (5 bullets) with a 15s cooldown on letter 'K'.
     """
     # Initialize variables on player if not already there
     if not hasattr(game.player, 'bullets_fired_in_burst'):
@@ -87,8 +88,8 @@ def handle_burst_fire(game, menu):
         else:
             game.player.bullets_fired_in_burst = 0 
 
-    # 2. Shooting Trigger for "O"
-    if keys[pg.K_o] and menu.select_option is not None:
+    # 2. Shooting Trigger for "K" (Rapid Fire)
+    if keys[pg.K_k] and menu.select_option is not None:
         if current_time - game.player.last_shot_time >= game.player.fire_rate_delay:
             if game.player.check_available_bullets():
                 game.player.fire = True 
@@ -100,7 +101,7 @@ def handle_burst_fire(game, menu):
                 if game.player.bullets_fired_in_burst == 5:
                     game.player.last_burst_time = current_time
     else:
-        # Reset counter on key release so single taps don't trigger cooldown
+        # Reset counter on key release so single taps on K don't trigger cooldown
         if game.player.bullets_fired_in_burst < 5:
             game.player.bullets_fired_in_burst = 0
             
