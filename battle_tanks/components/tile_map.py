@@ -8,7 +8,7 @@ from battle_tanks import ROUTE
 class TileMap:
     """ Load tilemap with tmx"""
     def __init__(self,filename):
-        tm = pytmx.load_pygame(ROUTE(f"assets/maps/{filename}"),pixelaplha = True)
+        tm = pytmx.load_pygame(ROUTE(f"assets/maps/{filename}"),pixelalpha = True)
         self.WIDTH = tm.width * tm.tilewidth
         self.HEIGHT = tm.height * tm.tileheight
         self.tmxdata = tm
