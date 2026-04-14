@@ -111,8 +111,6 @@ def main():
     text_damage = TextComponent((WIDTH//2,HEIGHT +16 ),f"Damage: {game.damage} %")
     bullets = pg.Surface((WIDTH,36))
 
-
-
     """
     CLIENT NETWORK
     """
@@ -121,9 +119,6 @@ def main():
 
     th_recevied.start()
     th_send.start()
-
-
-
 
     while True:
         for event in pg.event.get():

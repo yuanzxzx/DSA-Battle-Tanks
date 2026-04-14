@@ -260,7 +260,7 @@ class Menu:
         self.main_surface.blit(self.background_image, (0, 0))
         
         # Draw title at upper center
-        title = TextComponent((300, 80), "BATTLE TANKS", font_size=67, color=(255, 255, 255))
+        title = TextComponent((300, 80), "BATTLE TANKS", font_size=80, color=(255, 255, 255))
         title.update()
         title.draw(self.main_surface)
         
