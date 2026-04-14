@@ -4,6 +4,7 @@ import pygame as pg
 import queue 
 import threading as th
 import math
+import time
 from typing import Tuple, List
 
 from battle_tanks.components.text import TextComponent
@@ -63,6 +64,46 @@ from battle_tanks.menu import Menu
 #         y = player_data['y'] + distance * math.sin(math.radians(angle))
 #         return x, y
 
+
+def handle_burst_fire(game, menu):
+    """
+    Handles single tap shooting and hold-to-burst (5 bullets) with a 15s cooldown.
+    """
+    # Initialize variables on player if not already there
+    if not hasattr(game.player, 'bullets_fired_in_burst'):
+        game.player.bullets_fired_in_burst = 0
+        game.player.last_burst_time = 0
+        game.player.last_shot_time = 0
+        game.player.burst_cooldown = 15.0 
+        game.player.fire_rate_delay = 0.2
+
+    current_time = time.time()
+    keys = pg.key.get_pressed()
+
+    # 1. Check if we are in the 15s burst cooldown
+    if game.player.bullets_fired_in_burst >= 5:
+        if current_time - game.player.last_burst_time < game.player.burst_cooldown:
+            return 
+        else:
+            game.player.bullets_fired_in_burst = 0 
+
+    # 2. Shooting Trigger for "O"
+    if keys[pg.K_o] and menu.select_option is not None:
+        if current_time - game.player.last_shot_time >= game.player.fire_rate_delay:
+            if game.player.check_available_bullets():
+                game.player.fire = True 
+                game.network.send_move_tcp(Struct.FIRE_EVENT_PLAYER)
+                game.player.last_shot_time = current_time
+                game.player.bullets_fired_in_burst += 1
+                
+                # Start cooldown only on the 5th bullet of a hold
+                if game.player.bullets_fired_in_burst == 5:
+                    game.player.last_burst_time = current_time
+    else:
+        # Reset counter on key release so single taps don't trigger cooldown
+        if game.player.bullets_fired_in_burst < 5:
+            game.player.bullets_fired_in_burst = 0
+            
 
 def network_client_consumer(client: NetworkComponent):
     """
@@ -126,6 +167,7 @@ def main():
 
 
     while True:
+        handle_burst_fire(game, menu)
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 game.close()
