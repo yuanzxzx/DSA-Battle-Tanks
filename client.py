@@ -129,22 +129,48 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 game.close()
+                
+            elif event.type == pg.KEYDOWN:
+                key = event.dict.get("key")
+                
+                if key == pg.K_l and menu.select_option is not None:
+                    if game.player.laser_energy > 0: 
+                        game.player.laser_active = True
+                        game.network.send_move_tcp(Struct.LASER_ON_EVENT)
+    
             elif event.type == pg.KEYUP:
                 key = event.dict.get("key")
+                
+                if key == pg.K_l and menu.select_option is not None:
+                    game.player.laser_active = False
+                    game.network.send_move_tcp(Struct.LASER_OFF_EVENT)
+
                 if key == pg.K_o and menu.select_option is not None:
                     if game.player.check_available_bullets():
                         game.player.fire = True
                         game.network.send_move_tcp(Struct.FIRE_EVENT_PLAYER)
 
+ 
+        if game.player.laser_active:
+            game.player.laser_energy -= 1.5  
             
+            if game.player.laser_energy <= 0:
+                game.player.laser_energy = 0
+                game.player.laser_active = False
+                game.network.send_move_tcp(Struct.LASER_OFF_EVENT)
+        else:
+            if game.player.laser_energy < 100:
+                game.player.laser_energy += 0.5 
+
+        
         SCREEN.fill((0,0,0))
         game.update()
         game.draw(SCREEN)
+    
 
         bullets.blit(hud_bg, (0, 0))
         game.player.type_gun.render(bullets)
         SCREEN.blit(bullets,(0,HEIGHT))
-
 
         text_damage.text = f"Damage: {game.damage} %"
         text_damage.update()

@@ -31,6 +31,7 @@ class Player(Cannon):
         self.angle = 0
         self.angle_cannon = 0
         self.type_gun = cannon_type
+        
 
         self.image = pg.Surface((32, 32), pg.SRCALPHA)
         self.rect = self.image.get_rect()
@@ -45,6 +46,9 @@ class Player(Cannon):
         self.vly = 0
         self._life = 10
         self._dead = False
+        
+        self.laser_active = False
+        self.laser_energy = 100
 
 
     @staticmethod

@@ -180,6 +180,15 @@ class Server:
                     elif data == Struct.FIRE_EVENT_PLAYER:
                         # no instant bullet
                         pass
+
+                    elif data == Struct.LASER_ON_EVENT:
+                        player_data["laser_active"] = True
+                        q.put(Struct.pack_player(Struct.UPDATE_PLAYER, player_data))
+
+                    elif data == Struct.LASER_OFF_EVENT:
+                        player_data["laser_active"] = False
+                        q.put(Struct.pack_player(Struct.UPDATE_PLAYER, player_data))
+                        
             except (ConnectionResetError, ConnectionRefusedError, socket.error) as e:
                 logger.error(f"LOG ERROR: {e}")
                 print(f"ERROR IN SOCKET: {e}")
@@ -359,26 +368,38 @@ class Server:
                     current_time = time.time()
                     if current_time - self.tick_last_sent >= TICK_RATE:
                         self.tick_last_sent = current_time
+                    
+                        for pos, p_data in self._data.items():
+                            if p_data.get("laser_active"):
+                                import math
+                                rad = math.radians(-p_data["angle_cannon"] - 90)
+                                
+                                for target_pos, target_data in self._data.items():
+                                    if pos == target_pos or target_data.get("shield_active"): 
+                                        continue
+                                        
+                                    for step in range(20, 301, 20):
+                                        lx = p_data['x'] + 20 + step * math.cos(rad)
+                                        ly = p_data['y'] + 20 + step * math.sin(rad)
+                                        
+                                        dist = math.sqrt((lx - target_data['x'])**2 + (ly - target_data['y'])**2)
+                                        if dist < 25: 
+                                            target_data["damage_indicator"] += 0.5
+                                            break 
                         
                         bullet_updates = b""
-                        for bullet in self._active_bullets[:]: # Iterate over a copy
-                            # Move bullet based on its stored velocity
+                        for bullet in self._active_bullets[:]: 
                             bullet['x'] += bullet['vx']
                             bullet['y'] += bullet['vy']
                             bullet['life'] -= 1
                             
-                            # Check for collisions using Collision class logic
                             hit = Collision.check_bullet_at_point(bullet['x'], bullet['y'])
                             
                             if hit or bullet['life'] <= 0:
                                 self._active_bullets.remove(bullet)
-                                # If it hit a player/brick, pack that specific event to broadcast
                                 if hit: q.put(hit) 
                             else:
-                                # Pack the new position to send to everyone
                                 bullet_updates += Struct.pack_bullet_position(bullet['id'], bullet['x'], bullet['y'])
-                
-                        # Broadcast all players AND all bullet positions
                         game_state = Struct.pack_players(self._data) + bullet_updates
                         for conn in self._sockets:
                             self._executor.submit(send_data, conn, game_state)
