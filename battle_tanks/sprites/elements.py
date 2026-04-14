@@ -55,7 +55,7 @@ class Bullet(pg.sprite.Sprite):
         self.vy = -math.cos(radian_angle) * 15
 
     def update(self):
-        self.rect.x += self.vx\
+        self.rect.x += self.vx
         self.rect.y += self.vy
         self.distance_traveled += math.sqrt(self.vx**2 + self.vy**2)
         if self.distance_traveled >= self.max_distance:
