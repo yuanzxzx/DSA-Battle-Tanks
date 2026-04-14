@@ -5,7 +5,7 @@ import pygame as pg
 from battle_tanks.components.text import TextComponent
 from battle_tanks.game import Game
 from battle_tanks.commons.package import Struct
-from battle_tanks.commons.tank_surface import tank_cover
+from battle_tanks.commons.tank_surface import tank_cover, colors
 from battle_tanks.components.network import NetworkComponent
 from battle_tanks import ROUTE
 
@@ -25,6 +25,7 @@ class Menu:
         self.cover = None
         self.angle = 0
         self.angle_cannon = 0
+        self.selected_tank_color = 0  # Default to blue
 
         # Load background image
         self.background_image = pg.image.load(ROUTE('assets/images/camo_bg.png')).convert()
@@ -46,7 +47,7 @@ class Menu:
     def multiplayer_mode(self, game_screen) -> Union[Game, None]:
         """Menu connection form."""
         ip_text = "localhost"
-        name: str = "JOHN"
+        name: str = "JOHN PORK"
         user_text = "8010"
         option_select = 0
         status = NEU
@@ -66,6 +67,25 @@ class Menu:
         # Cursor blink indicator
         cursor_blink_time = 0
         cursor_blink_interval = 500  # milliseconds
+        
+        # Color picker button setup
+        color_picker_expanded = False
+        tank_preview_scale = 150
+        tank_preview_x = self.main_surface.get_width() - tank_preview_scale - 20
+        tank_preview_y = self.main_surface.get_height() - tank_preview_scale - 120
+        
+        # Color button
+        color_button_width = 100
+        color_button_height = 40
+        color_button_x = tank_preview_x + (tank_preview_scale - color_button_width) // 2
+        color_button_y = tank_preview_y + tank_preview_scale + 15
+        color_button_rect = pg.Rect(color_button_x, color_button_y, color_button_width, color_button_height)
+        
+        # Expanded color picker grid
+        color_picker_cols = 6
+        color_picker_rows = 4
+        color_circle_size = 25
+        color_rects = {}
 
         while True:
             for event in pg.event.get():
@@ -75,25 +95,58 @@ class Menu:
 
                 elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                     mouse_pos = event.pos
-                    if port_rect.collidepoint(mouse_pos):
-                        option_select = 0
-                    elif ip_rect.collidepoint(mouse_pos):
-                        option_select = 1
-                    elif name_rect.collidepoint(mouse_pos):
-                        option_select = 2
-                    elif enter_rect.collidepoint(mouse_pos):
-                        try:
-                            if len(user_text) > 0 and len(name) > 0:
-                                check_name = NetworkComponent.check_name((ip_text, int(user_text)), name)
-                                if check_name:
-                                    game = Game((ip_text, int(user_text)), game_screen, name)
-                                    if game.network.player_data != Struct.USER_NOT_AVAILABLE:
-                                        return game
-                                else:
+                    # Check color button click
+                    if color_button_rect.collidepoint(mouse_pos):
+                        color_picker_expanded = not color_picker_expanded
+                    # Check color picker clicks when expanded
+                    elif color_picker_expanded:
+                        color_clicked = False
+                        for color_id, color_rect in color_rects.items():
+                            if color_rect.collidepoint(mouse_pos):
+                                self.selected_tank_color = color_id
+                                color_picker_expanded = False
+                                color_clicked = True
+                                break
+                        if not color_clicked:
+                            if port_rect.collidepoint(mouse_pos):
+                                option_select = 0
+                            elif ip_rect.collidepoint(mouse_pos):
+                                option_select = 1
+                            elif name_rect.collidepoint(mouse_pos):
+                                option_select = 2
+                            elif enter_rect.collidepoint(mouse_pos):
+                                try:
+                                    if len(user_text) > 0 and len(name) > 0:
+                                        check_name = NetworkComponent.check_name((ip_text, int(user_text)), name)
+                                        if check_name:
+                                            game = Game((ip_text, int(user_text)), game_screen, name)
+                                            if game.network.player_data != Struct.USER_NOT_AVAILABLE:
+                                                return game
+                                        else:
+                                            status = RED_STATUS
+                                except ConnectionRefusedError as e:
+                                    print(e)
                                     status = RED_STATUS
-                        except ConnectionRefusedError as e:
-                            print(e)
-                            status = RED_STATUS
+                    else:
+                        if port_rect.collidepoint(mouse_pos):
+                            option_select = 0
+                        elif ip_rect.collidepoint(mouse_pos):
+                            option_select = 1
+                        elif name_rect.collidepoint(mouse_pos):
+                            option_select = 2
+                        elif enter_rect.collidepoint(mouse_pos):
+                            try:
+                                if len(user_text) > 0 and len(name) > 0:
+                                    check_name = NetworkComponent.check_name((ip_text, int(user_text)), name)
+                                    if check_name:
+                                        game = Game((ip_text, int(user_text)), game_screen, name)
+                                        if game.network.player_data != Struct.USER_NOT_AVAILABLE:
+                                            return game
+                                    else:
+                                        status = RED_STATUS
+                            except ConnectionRefusedError as e:
+                                print(e)
+                                status = RED_STATUS
 
                 elif event.type == pg.KEYDOWN:
                     if event.key == pg.K_TAB:
@@ -238,8 +291,52 @@ class Menu:
             self.angle %= 360
             self.angle_cannon %= 360
 
-            tank_cover(0, (100, 300), self.main_surface, scale=(200, 200), angle=self.angle, angle_cannon=self.angle_cannon)
-            tank_cover(1, (500, 300), self.main_surface, scale=(200, 200), angle=self.angle, angle_cannon=self.angle_cannon)
+            # Draw rotating tank showing selected color
+            tank_cover(self.selected_tank_color, (tank_preview_x, tank_preview_y), self.main_surface, scale=(tank_preview_scale, tank_preview_scale), angle=self.angle, angle_cannon=self.angle_cannon)
+            
+            # Draw color picker button
+            button_color = (60, 100, 60) if color_picker_expanded else (40, 70, 40)
+            button_border = (255, 255, 255) if color_picker_expanded else NEU
+            pg.draw.rect(self.main_surface, button_color, color_button_rect, border_radius=8)
+            pg.draw.rect(self.main_surface, button_border, color_button_rect, 2, border_radius=8)
+            
+            # Draw button text
+            button_text = "SELECT" if color_picker_expanded else "TANK COLOR"
+            button_label = TextComponent((color_button_rect.centerx, color_button_rect.centery), button_text, color=(255, 255, 255), font_size=14)
+            button_label.update()
+            button_label.draw(self.main_surface)
+            
+            # Draw expanded color picker
+            if color_picker_expanded:
+                # Update color rects based on button position
+                color_picker_start_x = tank_preview_x - 30
+                color_picker_start_y = color_button_y - (color_picker_rows * (color_circle_size + 8) + 20)
+                
+                for i in range(24):
+                    row = i // color_picker_cols
+                    col = i % color_picker_cols
+                    x = color_picker_start_x + col * (color_circle_size + 8)
+                    y = color_picker_start_y + row * (color_circle_size + 8)
+                    color_rects[i] = pg.Rect(x, y, color_circle_size, color_circle_size)
+                
+                # Draw semi-transparent background for expanded picker
+                picker_bg_rect = pg.Rect(color_picker_start_x - 10, color_picker_start_y - 10, 
+                                          color_picker_cols * (color_circle_size + 8) + 20, 
+                                          color_picker_rows * (color_circle_size + 8) + 20)
+                bg_surface = pg.Surface((picker_bg_rect.width, picker_bg_rect.height))
+                bg_surface.set_alpha(220)
+                bg_surface.fill((20, 30, 20))
+                self.main_surface.blit(bg_surface, picker_bg_rect.topleft)
+                pg.draw.rect(self.main_surface, NEU, picker_bg_rect, 2, border_radius=8)
+                
+                # Draw color circles
+                for color_id, color_rect in color_rects.items():
+                    is_selected = (color_id == self.selected_tank_color)
+                    border_width = 3 if is_selected else 1
+                    border_color = (255, 255, 255) if is_selected else NEU
+                    
+                    pg.draw.circle(self.main_surface, colors[color_id], color_rect.center, color_circle_size // 2)
+                    pg.draw.circle(self.main_surface, border_color, color_rect.center, color_circle_size // 2, border_width)
 
             pg.display.flip()
             self.clock.tick(60)
