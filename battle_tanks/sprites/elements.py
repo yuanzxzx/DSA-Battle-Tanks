@@ -62,31 +62,28 @@ class Bullet(pg.sprite.Sprite):
             self.kill()
 
 class Particle(pg.sprite.Sprite):
-    def __init__(self, x, y, color=(150, 75, 0)): # Default color is a brick-like brown
+    """Particle effect for wall destruction"""
+    def __init__(self, x, y, vx, vy, color=(139, 69, 19), lifetime=30):
         super().__init__()
-        
-        # Randomize the size of each piece of debris
-        size = random.randint(3, 8)
-        self.image = pg.Surface((size, size))
-        self.image.fill(color)
-        self.rect = self.image.get_rect(center=(x, y))
-        
-        # Randomize velocity (an "explosion" scatters in all directions)
-        self.vx = random.uniform(-4, 4)
-        self.vy = random.uniform(-4, 4)
-        
-        # Lifespan: How many frames the particle exists before vanishing
-        self.lifetime = random.randint(15, 30)
+        self.rect = pg.Rect(x, y, 4, 4)
+        self.vx = vx
+        self.vy = vy
+        self.color = color
+        self.lifetime = lifetime
+        self.age = 0
+        self.image = pg.Surface((4, 4), pg.SRCALPHA)
+        self._update_image()
+
+    def _update_image(self):
+        alpha = int(255 * (1 - self.age / self.lifetime))
+        self.image.fill((0, 0, 0, 0))
+        pg.draw.circle(self.image, (*self.color, alpha), (2, 2), 2)
 
     def update(self):
-        # Move the particle
+        self.age += 1
         self.rect.x += self.vx
         self.rect.y += self.vy
-        
-        # Add a tiny bit of "gravity" or friction if you want (optional)
-        self.vy += 0.2 
-        
-        # Decrease lifespan
-        self.lifetime -= 1
-        if self.lifetime <= 0:
-            self.kill() # Remove from all Sprite Groups
+        self.vy += 0.1  # gravity
+        self._update_image()
+        if self.age >= self.lifetime:
+            self.kill()

@@ -13,6 +13,7 @@ from battle_tanks.components.tile_map import TileMap
 from battle_tanks.components.camera import CameraComponent
 from battle_tanks.sprites import Player, Brick
 from battle_tanks.sprites.bullet import Bullet
+from battle_tanks.sprites.elements import Particle
 from battle_tanks.commons.municion import CannonType
 from battle_tanks.commons.tank_surface import tank_cover
 from battle_tanks.components.network import NetworkComponent
@@ -66,7 +67,7 @@ class Game:
         self.players: Dict[int,Player] = {}
         self._bricks = pg.sprite.Group()
         self._bullets = pg.sprite.Group()
-        self.particles = pg.sprite.Group() # <--- ADD THIS LINE
+        self._particles = pg.sprite.Group()
         self._damage = 0
                      
 
@@ -86,7 +87,18 @@ class Game:
     def damage(self):
         """ return damage from player """
         return self.player.damage
-
+    
+    def _spawn_particles(self, x, y, count=8):
+        """Spawn particles at brick destruction location"""
+        import math
+        import random
+        for _ in range(count):
+            angle = random.uniform(0, 2 * math.pi)
+            speed = random.uniform(2, 5)
+            vx = speed * math.cos(angle)
+            vy = speed * math.sin(angle)
+            particle = Particle(x, y, vx, vy, color=(139, 69, 19))
+            self._particles.add(particle)
 
     def load(self):
         for data_sprite in self.network.get_events_to_game_state():
@@ -108,6 +120,7 @@ class Game:
                 self._bullets.add(bullet)
 
         self._bullets.update(self.tile_rect)
+        self._particles.update()
 
         # Check bullet collisions with bricks (destructible objects)
         for bullet in self._bullets:
@@ -116,6 +129,7 @@ class Game:
                 for brick in hit_bricks:
                     self._bricks.remove(brick)
                     Collision.bricks.remove(brick)
+                    self._spawn_particles(brick.rect.centerx, brick.rect.centery)
                     if self.network:
                         event_data = Struct.pack_tile({
                             "type": Struct.BROKE_BRICK,
@@ -175,10 +189,8 @@ class Game:
                     brick_rect = pg.Rect(recv["x"], recv["y"], recv["w"], recv["h"])
                     sprite_brick = find_sprite(brick_rect, self._bricks)
                     if sprite_brick:
-                        for _ in range(random.randint(10, 15)):
-                            p = Particle(sprite_brick.rect.centerx, sprite_brick.rect.centery)
-                            self.particles.add(p)
                         self._bricks.remove(sprite_brick)
+                        self._spawn_particles(sprite_brick.rect.centerx, sprite_brick.rect.centery)
                         SOUND_BOOM.play()
                         sprite_brick.kill()
                         
@@ -192,7 +204,6 @@ class Game:
 
 
         self.camera.update(self.player)
-        self.particles.update()
 
     def draw(self, main_screen: pg.Surface):
         """ Draw the player and scene. """
@@ -262,10 +273,8 @@ class Game:
         for brick in self._bricks:
             self.SCREEN.blit(brick.image, self.camera.apply(brick))
 
-        # --- DRAW PARTICLES ---
-        for p in self.particles:
-            # We use a camera.apply(p) so the particles scroll correctly with the map
-            self.SCREEN.blit(p.image, self.camera.apply(p))
+        for particle in self._particles:
+            self.SCREEN.blit(particle.image, self.camera.apply(particle))
             
         for bullet in self._bullets:
             self.SCREEN.blit(bullet.image, self.camera.apply(bullet))
