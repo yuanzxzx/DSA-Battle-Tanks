@@ -11,7 +11,7 @@ from battle_tanks import ROUTE
 
 GREEN_STATUS = (0, 128, 0)
 RED_STATUS = (255,0,0)
-NEU = (100,100,100)
+NEU = (191, 191, 191)
 BACKGROUND = (0,30,0)
 
 class Menu:
@@ -57,10 +57,10 @@ class Menu:
         input_height = 44
         input_x = center_x - input_width // 2
 
-        name_rect = pg.Rect(input_x, 120, input_width, input_height)
-        ip_rect = pg.Rect(input_x, 180, input_width, input_height)
-        port_rect = pg.Rect(input_x, 240, input_width, input_height)
-        enter_label = TextComponent((center_x, 340), "ENTER", status, font_size=36)
+        name_rect = pg.Rect(input_x, 270, input_width, input_height)
+        ip_rect = pg.Rect(input_x, 330, input_width, input_height)
+        port_rect = pg.Rect(input_x, 390, input_width, input_height)
+        enter_label = TextComponent((center_x, 490), "ENTER", status, font_size=36)
         enter_label.update()
         enter_rect = enter_label._rect.inflate(30, 18)
         
@@ -207,22 +207,47 @@ class Menu:
 
             self.main_surface.blit(self.background_image, (0, 0))
 
-            title = TextComponent((self.main_surface.get_width() // 2, 40), "BATTLE TANKS", font_size=60, color=(255, 255, 255))
-            title.update()
-            title.draw(self.main_surface)
+            # Title with 3D shadow effect - split into "BATTLE" and "TANKS"
+            shadow_color = (30, 30, 30)
+            title_color = (255, 255, 255)
+            font_size = 115
+            title_x = self.main_surface.get_width() // 2
+            title_y_battle = 80
+            title_y_tanks = 168
+            shadow_offset_x = 6
+            shadow_offset_y = 6
+            
+            # Draw BATTLE with shadow
+            battle_shadow = TextComponent((title_x + shadow_offset_x, title_y_battle + shadow_offset_y), "BATTLE", font_size=font_size, color=shadow_color)
+            battle_shadow.update()
+            battle_shadow.draw(self.main_surface)
+            
+            battle_text = TextComponent((title_x, title_y_battle), "BATTLE", font_size=font_size, color=title_color)
+            battle_text.update()
+            battle_text.draw(self.main_surface)
+            
+            # Draw TANKS with shadow
+            tanks_shadow = TextComponent((title_x + shadow_offset_x, title_y_tanks + shadow_offset_y), "TANKS", font_size=font_size, color=shadow_color)
+            tanks_shadow.update()
+            tanks_shadow.draw(self.main_surface)
+            
+            tanks_text = TextComponent((title_x, title_y_tanks), "TANKS", font_size=font_size, color=title_color)
+            tanks_text.update()
+            tanks_text.draw(self.main_surface)
 
             input_padding = 16
-            surface_input_port = pg.Surface((input_width, input_height))
-            surface_input_ip = pg.Surface((input_width, input_height))
-            surface_input_name = pg.Surface((input_width, input_height))
+            surface_input_port = pg.Surface((input_width, input_height), pg.SRCALPHA)
+            surface_input_ip = pg.Surface((input_width, input_height), pg.SRCALPHA)
+            surface_input_name = pg.Surface((input_width, input_height), pg.SRCALPHA)
 
             port_bg = (40, 70, 40) if option_select == 0 else (20, 40, 20)
             ip_bg = (40, 70, 40) if option_select == 1 else (20, 40, 20)
             name_bg = (40, 70, 40) if option_select == 2 else (20, 40, 20)
 
-            surface_input_port.fill(port_bg)
-            surface_input_ip.fill(ip_bg)
-            surface_input_name.fill(name_bg)
+            # Draw rounded background rectangles
+            pg.draw.rect(surface_input_port, port_bg, (0, 0, input_width, input_height), border_radius=10)
+            pg.draw.rect(surface_input_ip, ip_bg, (0, 0, input_width, input_height), border_radius=10)
+            pg.draw.rect(surface_input_name, name_bg, (0, 0, input_width, input_height), border_radius=10)
 
             port_border = (255, 255, 255) if option_select == 0 else NEU
             ip_border = (255, 255, 255) if option_select == 1 else NEU
@@ -259,6 +284,11 @@ class Menu:
             self.main_surface.blit(surface_input_name, name_rect.topleft)
             self.main_surface.blit(surface_input_ip, ip_rect.topleft)
             self.main_surface.blit(surface_input_port, port_rect.topleft)
+            
+            # Draw white outline around all text boxes
+            pg.draw.rect(self.main_surface, (255, 255, 255), port_rect, 1, border_radius=10)
+            pg.draw.rect(self.main_surface, (255, 255, 255), ip_rect, 1, border_radius=10)
+            pg.draw.rect(self.main_surface, (255, 255, 255), name_rect, 1, border_radius=10)
 
             label_color_name = (255, 255, 255) if option_select == 2 else NEU
             label_color_ip = (255, 255, 255) if option_select == 1 else NEU
@@ -356,10 +386,6 @@ class Menu:
         """ Draw options"""
         self.main_surface.blit(self.background_image, (0, 0))
         
-        # Draw title at upper center
-        title = TextComponent((300, 80), "BATTLE TANKS", font_size=96, color=(255, 255, 255))
-        title.update()
-        title.draw(self.main_surface)
         
         mouse_pos = pg.mouse.get_pos()
 
