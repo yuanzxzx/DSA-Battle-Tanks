@@ -75,7 +75,7 @@ def handle_burst_fire(game, menu):
         game.player.last_burst_time = 0
         game.player.last_shot_time = 0
         game.player.burst_cooldown = 15.0 
-        game.player.fire_rate_delay = 0.2
+        game.player.fire_rate_delay = 0
 
     current_time = time.time()
     keys = pg.key.get_pressed()
