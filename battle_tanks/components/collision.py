@@ -161,7 +161,7 @@ class Collision:
     @classmethod
     def collide_with_objects(cls, player: dict):
         # 1. Screen Boundary Checks
-        if player["x"] = 0:
+        if player["x"] <= 0:
             player["x"] = 0
         elif player["x"] + Player.SIZE_BODY_RECT[0] >= cls.size_screen[0]:
             player["x"] = cls.size_screen[0] - Player.SIZE_BODY_RECT[0]
