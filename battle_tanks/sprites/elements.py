@@ -1,6 +1,5 @@
 import pygame as pg
 import math
-import random
 from battle_tanks import ROUTE
 
 

@@ -6,7 +6,6 @@ from typing import Tuple, Dict, Union, List
 import pygame as pg
 import random
 
-from battle_tanks.sprites.elements import Particle
 from battle_tanks.commons.package import Struct, Collision
 from battle_tanks.components.movement import MovementComponent
 from battle_tanks.components.tile_map import TileMap
