@@ -5,6 +5,7 @@ import sys
 from typing import Tuple, Dict, Union, List
 import pygame as pg
 
+from battle_tanks.sprites.elements import Particle
 from battle_tanks.commons.package import Struct, Collision
 from battle_tanks.components.movement import MovementComponent
 from battle_tanks.components.tile_map import TileMap
@@ -64,7 +65,9 @@ class Game:
         self.players: Dict[int,Player] = {}
         self._bricks = pg.sprite.Group()
         self._bullets = pg.sprite.Group()
+        self.particles = pg.sprite.Group() # <--- ADD THIS LINE
         self._damage = 0
+                     
 
         if self.network and self.network.player_data != Struct.USER_NOT_AVAILABLE:
             position = (self.network.player_data["x"],self.network.player_data["y"])
@@ -162,12 +165,14 @@ class Game:
                     brick_rect = pg.Rect(recv["x"], recv["y"], recv["w"], recv["h"])
                     sprite_brick = find_sprite(brick_rect, self._bricks)
                     if sprite_brick:
+                        for _ in range(random.randint(10, 15)):
+                            p = Particle(sprite_brick.rect.centerx, sprite_brick.rect.centery)
+                            self.particles.add(p)
                         self._bricks.remove(sprite_brick)
                         SOUND_BOOM.play()
-                        self.camera.shake()
                         sprite_brick.kill()
                         
-                    # Also remove from collision system
+                    # Also remove from the collision system
                     collision_brick = find_sprite(brick_rect, Collision.bricks)
                     if collision_brick:
                         Collision.bricks.remove(collision_brick)
@@ -177,7 +182,7 @@ class Game:
 
 
         self.camera.update(self.player)
-
+        self.particles.update()
 
     def draw(self, main_screen: pg.Surface):
         """ Draw the player and scene. """
@@ -245,7 +250,12 @@ class Game:
                             (health_x, energy_y, current_energy_width, health_height))
 
         for brick in self._bricks:
-            self.SCREEN.blit(brick.image,self.camera.apply(brick))
+            self.SCREEN.blit(brick.image, self.camera.apply(brick))
+
+        # --- DRAW PARTICLES ---
+        for p in self.particles:
+            # We use a camera.apply(p) so the particles scroll correctly with the map
+            self.SCREEN.blit(p.image, self.camera.apply(p))
             
         for bullet in self._bullets:
             self.SCREEN.blit(bullet.image, self.camera.apply(bullet))
