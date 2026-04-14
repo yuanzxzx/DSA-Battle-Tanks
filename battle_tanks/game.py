@@ -10,7 +10,7 @@ from battle_tanks.components.movement import MovementComponent
 from battle_tanks.components.tile_map import TileMap
 from battle_tanks.components.camera import CameraComponent
 from battle_tanks.sprites import Player, Brick
-from battle_tanks.sprites.elements import Bullet
+from battle_tanks.sprites.bullet import Bullet
 from battle_tanks.commons.municion import CannonType
 from battle_tanks.commons.tank_surface import tank_cover
 from battle_tanks.components.network import NetworkComponent
@@ -89,25 +89,33 @@ class Game:
             if data_sprite[0] == Struct.BRICK:
                 brick = Brick(data_sprite[1],data_sprite[2],data_sprite[3],data_sprite[4])
                 self._bricks.add(brick)
-
+                Collision.bricks.add(brick)  # Also add to collision system
 
     def update(self):
         """ Update Game"""
 
-        for key,player in self.players.items():
+        for key, player in self.players.items():
             if player.fire:
                 SHOT.play()
-                
-                import math
-                radian_angle = math.radians(player.angle_cannon)
-                start_x = player.rect.centerx + math.sin(radian_angle) * -30
-                start_y = player.rect.centery + math.cos(radian_angle) * -30
-                self._bullets.add(Bullet(start_x, start_y, player.angle_cannon))
-                
                 player.fire = False
+                # Spawn bullet from cannon position
+                bullet_start_pos = player.rect_cannon.center
+                bullet = Bullet(bullet_start_pos, player.angle_cannon)
+                self._bullets.add(bullet)
 
-        self._bullets.update()
+        self._bullets.update(self.tile_rect)
 
+        # Check bullet collisions with bricks (destructible objects)
+        for bullet in self._bullets:
+            hit_bricks = pg.sprite.spritecollide(bullet, self._bricks, False,)
+            if hit_bricks:
+                for brick in hit_bricks:
+                    self._bricks.remove(brick)
+                    Collision.bricks.remove(brick)
+                    SOUND_BOOM.play()
+                    brick.kill()
+                bullet.kill()
+                
         """ SEND MOVES BYTES """
         self.move.keys()
         """ MOVES RESPONSE """
@@ -126,10 +134,6 @@ class Game:
                 elif recv.get("status") in (Struct.UPDATE_PLAYER, Struct.PLAYER_SHOT):
                     position = recv["position"]
                     
-                    if recv.get("status") == Struct.PLAYER_SHOT:
-                        self.camera.shake()
-                        SOUND_BOOM.play()
-
                     if self.players.get(position):
                         player = self.players[position]
 
@@ -138,6 +142,8 @@ class Game:
 
                         player.body_rect.x = player.rect.x
                         player.body_rect.y = player.rect.y
+
+                        player.rect_cannon.center = player.body_rect.center
 
                         player.angle = recv["angle"]
                         player.angle_cannon = recv["angle_cannon"]
@@ -148,17 +154,22 @@ class Game:
                         player.name = recv.get("name", f"Player {position}")  # Establecer el nombre del jugador
                         self.players[position] = player
 
-                # In battle_tanks/game.py inside the update() method
                 elif recv.get("status") == Struct.BROKE_BRICK:
                     brick_rect = pg.Rect(recv["x"], recv["y"], recv["w"], recv["h"])
                     sprite_brick = find_sprite(brick_rect, self._bricks)
                     if sprite_brick:
-                        sprite_brick.kill() # This removes it from self._bricks group locally
+                        self._bricks.remove(sprite_brick)
                         SOUND_BOOM.play()
+                        self.camera.shake()
+                        sprite_brick.kill()
+                        
+                    # Also remove from collision system
+                    collision_brick = find_sprite(brick_rect, Collision.bricks)
+                    if collision_brick:
+                        Collision.bricks.remove(collision_brick)
 
                 elif recv.get("status") == Struct.BLOCK:
                     Brick.boom() #Change for Block sound
-                    self.camera.shake()
 
 
         self.camera.update(self.player)
@@ -167,6 +178,9 @@ class Game:
     def draw(self, main_screen: pg.Surface):
         """ Draw the player and scene. """
         self.SCREEN.blit(self.tile_image,self.camera.apply_rect(self.tile_rect))
+
+        for bullet in self._bullets:
+            self.SCREEN.blit(bullet.image, self.camera.apply(bullet))
 
         for _,player in self.players.items():
             # Dibujar el tanque
