@@ -142,6 +142,10 @@ class Game:
                         player.angle = recv["angle"]
                         player.angle_cannon = recv["angle_cannon"]
                         player.damage = recv["damage_indicator"]
+                        
+                        player.laser_active = recv.get("laser_active", getattr(player, "laser_active", False))
+
+                    
 
                     else:
                         player = Player((recv["x"], recv["y"]), position, cannon_type=type_guns.get("BASIC"))
