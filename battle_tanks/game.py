@@ -87,6 +87,18 @@ class Game:
         self.move = MovementComponent(self.network, self.player)
         self.load()
 
+        self._powerups = pg.sprite.Group()
+        self._landmines = pg.sprite.Group()
+        self.landmine_count = 0
+        self._font = pg.font.Font(None, 24)  
+        self._spawn_powerups()
+        
+        self.notifications = [] 
+        self.mine_cooldown = 0
+
+    def add_notification(self, text: str, duration: int = 120):
+        self.notifications.append({"text": text, "timer": duration})
+
 
     @property
     def damage(self):
