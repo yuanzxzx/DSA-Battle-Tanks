@@ -92,7 +92,7 @@ class PowerUp(pg.sprite.Sprite):
         super().__init__()
         
         self.image = pg.Surface((24, 24), pg.SRCALPHA)
-        self.image.fill((255, 255, 0))  d
+        self.image.fill((255, 255, 0))  
         pg.draw.rect(self.image, (255, 165, 0), self.image.get_rect(), 3) 
         
         font = pg.font.Font(None, 24)
