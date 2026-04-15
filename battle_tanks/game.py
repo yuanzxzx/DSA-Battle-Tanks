@@ -123,6 +123,21 @@ class Game:
                 brick = Brick(data_sprite[1],data_sprite[2],data_sprite[3],data_sprite[4])
                 self._bricks.add(brick)
                 Collision.bricks.add(brick)  # Also add to collision system
+
+    def _spawn_powerups(self):
+        """ Spawns 5 crates randomly across the map coordinates """
+        for _ in range(5):
+            rx = random.randint(100, 1000)
+            ry = random.randint(100, 1000)
+            self._powerups.add(PowerUp(rx, ry))
+
+    def place_landmine(self):
+        if self.landmine_count > 0:
+            owner = self.network.name if self.network else "local"
+            mine = LandMine(int(self.player.rect.x), int(self.player.rect.y), owner)
+            self._landmines.add(mine)
+            self.landmine_count -= 1
+            
     def break_brick_locally(self, brick):
         """Handles the local visual removal of a brick."""
         if brick in self._bricks:
@@ -145,6 +160,21 @@ class Game:
             self.network.send_move_tcp(event_data)
     def update(self):
         """ Update Game"""
+        keys = pg.key.get_pressed()
+        if keys[pg.K_m] and self.mine_cooldown == 0 and self.landmine_count > 0:
+            self.place_landmine()
+            self.add_notification("Landmine Placed!")
+            self.mine_cooldown = 30  
+            
+        if self.mine_cooldown > 0:
+            self.mine_cooldown -= 1keys = pg.key.get_pressed()
+        if keys[pg.K_m] and self.mine_cooldown == 0 and self.landmine_count > 0:
+            self.place_landmine()
+            self.add_notification("Landmine Placed!")
+            self.mine_cooldown = 30  
+            
+        if self.mine_cooldown > 0:
+            self.mine_cooldown -= 1
         if self.player.laser_active:
                     # 1. Get objects currently in the laser's path
                     hits = Collision.get_laser_intersections(self.player.telescopic_sight(), 300)
