@@ -390,18 +390,31 @@ class Server:
                                 import math
                                 rad = math.radians(-p_data["angle_cannon"] - 90)
                                 
-                                for target_pos, target_data in self._data.items():
-                                    if pos == target_pos or target_data.get("shield_active"): 
-                                        continue
-                                        
-                                    for step in range(20, 301, 20):
-                                        lx = p_data['x'] + 20 + step * math.cos(rad)
-                                        ly = p_data['y'] + 20 + step * math.sin(rad)
-                                        
-                                        dist = math.sqrt((lx - target_data['x'])**2 + (ly - target_data['y'])**2)
-                                        if dist < 25: 
-                                            target_data["damage_indicator"] += 0.5
-                                            break 
+                                for step in range(20, 301, 20):
+                                    lx = p_data['x'] + 20 + step * math.cos(rad)
+                                    ly = p_data['y'] + 20 + step * math.sin(rad)
+                                    
+                                    laser_hit_something = False
+
+                                    hit = Collision.check_bullet_at_point(lx, ly)
+                                    if hit:
+                                        if Struct.BROKE_BRICK in hit:
+                                            q.put(hit) 
+                                            laser_hit_something = True 
+                                            
+                                    if not laser_hit_something:
+                                        for target_pos, target_data in self._data.items():
+                                            if pos == target_pos or target_data.get("shield_active"): 
+                                                continue
+                                                
+                                            dist = math.sqrt((lx - target_data['x'])**2 + (ly - target_data['y'])**2)
+                                            if dist < 25: 
+                                                target_data["damage_indicator"] += 0.5
+                                                laser_hit_something = True 
+                                                break 
+                                    if laser_hit_something:
+                                        break 
+                        # ==========================================
                         
                         bullet_updates = b""
                         for bullet in self._active_bullets[:]: 
@@ -416,6 +429,7 @@ class Server:
                                 if hit: q.put(hit) 
                             else:
                                 bullet_updates += Struct.pack_bullet_position(bullet['id'], bullet['x'], bullet['y'])
+                        
                         game_state = Struct.pack_players(self._data) + bullet_updates
                         for conn in self._sockets:
                             self._executor.submit(send_data, conn, game_state)
