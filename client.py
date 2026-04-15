@@ -212,6 +212,10 @@ def main():
                         game.player.fire = True
                         game.network.send_move_tcp(Struct.FIRE_EVENT_PLAYER)
 
+            elif event.type == pg.KEYDOWN:
+                if key == pg.K_m and menu.select_option is not None:
+                    game.place_landmine()
+
  
         if game.player.laser_active:
             game.player.laser_energy -= 1.5  
