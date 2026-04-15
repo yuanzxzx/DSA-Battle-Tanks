@@ -139,7 +139,7 @@ class LandMine(pg.sprite.Sprite):
         if self.owner == local_name:
             self.image.set_alpha(150)
         else:
-            self.image.set_alpha(0)
+            self.image.set_alpha(255)
 
     def check_trigger(self, players: list) -> bool:
         if not self.active:
