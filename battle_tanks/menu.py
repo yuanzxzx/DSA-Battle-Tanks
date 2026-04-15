@@ -415,19 +415,20 @@ class Menu:
                     "MOVEMENT:",
                     "W - Move Forward",
                     "S - Move Backward", 
-                    "A - Move Right",
-                    "D - Move Left",
+                    "A - Move Left",
+                    "D - Move Right",
                     "",
                     "CANNON:",
-                    "I - Rotate Right",
-                    "P - Rotate Left",
+                    "I - Rotate Left",
+                    "P - Rotate Right",
                     "",
                     "ACTIONS:",
-                    "O - Fire Bullet (Hold to Rapid Fire)",
+                    "O - Fire Bullet",
+                    "K - Burst Fire (15s Cooldown)",
                     "L - Laser (Hold)"
                 ]
                 
-                y_offset = 65
+                y_offset = 55
                 for control in controls:
                     if control == "":
                         y_offset += 8
