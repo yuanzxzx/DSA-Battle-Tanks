@@ -69,7 +69,8 @@ class Server:
         self._executor = ThreadPoolExecutor(max_workers=10,thread_name_prefix="CLIENT_RECV")
         self._socket.listen(self._max_players)
 
-        DatabaseManager.configure({"database_name":"database.json"})
+        db_name = os.getenv("DATABASE_NAME", "database.json")
+        DatabaseManager.configure({"database_name": db_name})
         self.persistence = DatabaseManager.get()
 
         Collision.load(lvl_map_tmx, Struct.pack_tile)

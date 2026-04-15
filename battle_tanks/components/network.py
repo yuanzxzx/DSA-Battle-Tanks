@@ -10,16 +10,16 @@ from queue import SimpleQueue
 class NetworkComponent:
     """ Client TCP connection """
 
-    SEND_Q = SimpleQueue()
-    UPDATE_Q = SimpleQueue()
-
-
     def __init__(self, addr: Tuple[str, int], name: str = "John", tank_color: int = 0):
         print(f"Connecting to {addr}, Player: {name}")
         self.name = name
         self.addr = addr
         self.tank_color = tank_color
         self.lvl_map: str = ""
+        
+        # Instance-specific queues (not shared across instances)
+        self.SEND_Q = SimpleQueue()
+        self.UPDATE_Q = SimpleQueue()
 
         self._socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket_tcp.connect(addr)
@@ -177,16 +177,14 @@ class NetworkComponent:
         return Struct.unpack_events(self.game_state)
 
 
-    @classmethod
-    def send_keys(cls, keys: List[bytes]) -> None:
+    def send_keys(self, keys: List[bytes]) -> None:
         for action in keys:
-            cls.SEND_Q.put(action)
+            self.SEND_Q.put(action)
 
     
-    @classmethod
-    def recv_to_queue(cls) -> bytes:
+    def recv_to_queue(self) -> bytes:
         data = []
-        while cls.UPDATE_Q.empty() is False:
-            data.extend(cls.UPDATE_Q.get())
+        while self.UPDATE_Q.empty() is False:
+            data.extend(self.UPDATE_Q.get())
     
         return data

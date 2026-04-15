@@ -135,7 +135,7 @@ def network_client_consumer(client: NetworkComponent):
         data = client.recv_move_player()
         
         # Put the received data into the update queue
-        NetworkComponent.UPDATE_Q.put(data)
+        client.UPDATE_Q.put(data)
 
 
 def network_client_handler(client: NetworkComponent):
@@ -144,7 +144,7 @@ def network_client_handler(client: NetworkComponent):
     """
     while True:
         # Get an item from the SEND_Q queue
-        data = NetworkComponent.SEND_Q.get()
+        data = client.SEND_Q.get()
         
         # If the item is not queue.Empty, send the move to the server
         if data is not queue.Empty:
