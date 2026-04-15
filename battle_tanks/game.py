@@ -134,8 +134,7 @@ class Game:
 
     def place_landmine(self):
         if self.landmine_count > 0:
-            owner = self.network.name if self.network else "local"
-            mine = LandMine(int(self.player.rect.x), int(self.player.rect.y), owner)
+            mine = LandMine(int(self.player.rect.x), int(self.player.rect.y), self._player_number)
             self._landmines.add(mine)
             self.landmine_count -= 1
             
