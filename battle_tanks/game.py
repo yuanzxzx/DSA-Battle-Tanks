@@ -109,9 +109,27 @@ class Game:
                 brick = Brick(data_sprite[1],data_sprite[2],data_sprite[3],data_sprite[4])
                 self._bricks.add(brick)
                 Collision.bricks.add(brick)  # Also add to collision system
+    def break_brick_locally(self, brick):
+        """Handles the local visual removal of a brick."""
+        if brick in self._bricks:
+            self._bricks.remove(brick)
+            Collision.bricks.remove(brick)
+            self._spawn_particles(brick.rect.centerx, brick.rect.centery)
+            SOUND_BOOM.play()
+            brick.kill()
 
+    def send_brick_break_to_server(self, brick):
+        """Informs the network that a brick has been destroyed."""
+        if self.network:
+            event_data = Struct.pack_tile({
+                "type": Struct.BROKE_BRICK,
+                "x": brick.rect.x,
+                "y": brick.rect.y,
+                "w": brick.rect.w,
+                "h": brick.rect.h
+            })
+            self.network.send_move_tcp(event_data)
     def update(self):
-        dt = 1/60
         """ Update Game"""
         if self.player.laser_active:
                     # 1. Get objects currently in the laser's path
@@ -159,6 +177,7 @@ class Game:
 
         self._bullets.update(self.tile_rect)
         self._particles.update()
+        dt = 1/60
 
         # Check bullet collisions with bricks (destructible objects)
         for bullet in self._bullets:
