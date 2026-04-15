@@ -219,8 +219,19 @@ class Game:
                     dist = math.sqrt((p["x"] - mine.world_x)**2 + (p["y"] - mine.world_y)**2)
                     if dist < LandMine.EXPLOSION_RADIUS:
                         if p["obj"].player_number == self._player_number:
-                            damage_taken = LandMine.DAMAGE * (1 - dist / LandMine.EXPLOSION_RADIUS)
-                            p["obj"].local_mine_damage = getattr(p["obj"], "local_mine_damage", 0) + damage_taken
+                            damage_taken = int(LandMine.DAMAGE * (1 - dist / LandMine.EXPLOSION_RADIUS))
+                            
+                            if self.network:
+                                event_data = Struct.pack_tile({
+                                    "type": 99, 
+                                    "x": mine.world_x,
+                                    "y": mine.world_y,
+                                    "w": damage_taken,  
+                                    "h": self._player_number 
+                                })
+                                self.network.send_move_tcp(event_data)
+                            else:
+                                p["obj"].damage += damage_taken 
                 
                 mine.kill()
                 self._spawn_particles(mine.world_x, mine.world_y, count=20)
