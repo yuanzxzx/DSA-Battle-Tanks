@@ -48,7 +48,8 @@ class Game:
                  screen:pg.Surface,
                  player_name="John",
                  tank_color:int=0):
-                 self.laser_timers = {}
+        
+        self.laser_timers = {}
 
         self.network = NetworkComponent(addr,player_name) if addr is not None else None
         self._player_number = self.network.player_number if addr is not None else 0
@@ -143,9 +144,9 @@ class Game:
                             if enemy["damage_indicator"] >= Player.MAX_DAMAGE:
                                 # Respawn logic...
                                 enemy["damage_indicator"] = 0
-                else:
+                    else:
                     # Clear timers if laser is turned off
-                    self.laser_timers.clear()
+                        self.laser_timers.clear()
                     
         for key, player in self.players.items():
             if player.fire:
