@@ -328,14 +328,28 @@ class Game:
                         SOUND_BOOM.play()
                         sprite_brick.kill()
                         
-                    # Also remove from the collision system
                     collision_brick = find_sprite(brick_rect, Collision.bricks)
                     if collision_brick:
                         Collision.bricks.remove(collision_brick)
 
                 elif recv.get("status") == Struct.BLOCK:
-                    Brick.boom() #Change for Block sound
+                    Brick.boom() 
 
+                elif recv.get("status") == 98:
+                    owner_id = recv["w"]
+                    if owner_id != self._player_number: 
+                        enemy_mine = LandMine(recv["x"], recv["y"], owner_id)
+                        self._landmines.add(enemy_mine)
+
+                elif recv.get("status") == 99:
+                    hit_player_id = recv["h"]
+                    if hit_player_id != self._player_number:
+                        self._spawn_particles(recv["x"], recv["y"], count=20)
+                        SOUND_BOOM.play()
+        
+                        for mine in list(self._landmines):
+                            if mine.world_x == recv["x"] and mine.world_y == recv["y"]:
+                                mine.kill()
 
         self.camera.update(self.player)
 
