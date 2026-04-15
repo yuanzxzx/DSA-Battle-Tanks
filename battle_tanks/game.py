@@ -17,6 +17,8 @@ from battle_tanks.commons.municion import CannonType
 from battle_tanks.commons.tank_surface import tank_cover
 from battle_tanks.components.network import NetworkComponent
 from battle_tanks import ROUTE
+from battle_tanks.sprites.powerup import PowerUp
+from battle_tanks.sprites.landmine import LandMine
 
 
 type_guns = {
