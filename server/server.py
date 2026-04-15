@@ -250,24 +250,25 @@ class Server:
                     if data != b'': #NAME PLAYER
                         # Separate name and tank_color
                         tank_color = 0
-                        if len(data) > Struct.BUFFER_SIZE_NAME:
+                        if len(data) >= Struct.BUFFER_SIZE_NAME + 1:
                             tank_color = data[-1]  # Last byte is tank_color
                             data = data[:-1]  # Remove tank_color byte
                         
-                        data = Struct.unpack(data)
-                        logger.warning(f"ADD NEW_CONEXIONS: {data} with tank_color: {tank_color}")
-                        if data.find("-c") > -1:
-                            if data[:-2] in self._filter_name:
+                        # Decode fixed-length padded name (strip null bytes)
+                        player_name = data.decode('utf-8').rstrip('\x00')
+                        logger.warning(f"ADD NEW_CONEXIONS: {player_name} with tank_color: {tank_color}")
+                        if player_name.find("-c") > -1:
+                            if player_name[:-2] in self._filter_name:
                                 conn.send(Struct.USER_NOT_AVAILABLE)
                             conn.send(Struct.OK_MESSAGE)
                             continue
 
                         current = list(set(range(self._max_players)) - set([position for position, _ in self._data.items()]))[0]
-                        searching_player = self.persistence.find("player", {"name": data})
+                        searching_player = self.persistence.find("player", {"name": player_name})
 
                         if len(searching_player) > 0:
                             """check user if exists in self._data"""
-                            if data in self._filter_name:
+                            if player_name in self._filter_name:
                                 logger.debug(f"NAME IN DATA: {self._filter_name} TO: {Struct.USER_NOT_AVAILABLE}")
                                 conn.send(Struct.USER_NOT_AVAILABLE)
                                 continue
@@ -281,7 +282,7 @@ class Server:
                             player = self.persistence.save(
                                 "player",{
                                     "damage_indicator":0,
-                                    "name": data,
+                                    "name": player_name,
                                     "position": current,
                                     "x": x,
                                     "y": y,

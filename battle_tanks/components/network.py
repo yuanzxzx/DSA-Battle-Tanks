@@ -34,7 +34,14 @@ class NetworkComponent:
         ok = self._socket_tcp.recv(Struct.BUFFER_SIZE_EVENT)
         if ok == Struct.OK_MESSAGE:
             # Send name and tank_color
-            name_data = Struct.pack(self.name)
+            # Pad name to fixed length so server knows where color byte is
+            name_data = self.name.encode('utf-8')
+            # Pad or truncate to BUFFER_SIZE_NAME
+            if len(name_data) < Struct.BUFFER_SIZE_NAME:
+                name_data = name_data + b'\x00' * (Struct.BUFFER_SIZE_NAME - len(name_data))
+            else:
+                name_data = name_data[:Struct.BUFFER_SIZE_NAME]
+            
             color_data = struct.pack('B', int(self.tank_color))
             self._socket_tcp.send(name_data + color_data)
             lvl_map = self._socket_tcp.recv(Struct.BUFFER_SIZE_LVL_MAP)
@@ -140,7 +147,15 @@ class NetworkComponent:
             sock.connect(addr)
 
             if sock.recv(Struct.BUFFER_SIZE_EVENT) == Struct.OK_MESSAGE:
-                sock.send(Struct.pack(name + "-c"))
+                # Send check request with fixed-length padded name
+                check_name = (name + "-c").encode('utf-8')
+                if len(check_name) < Struct.BUFFER_SIZE_NAME:
+                    check_name = check_name + b'\x00' * (Struct.BUFFER_SIZE_NAME - len(check_name))
+                else:
+                    check_name = check_name[:Struct.BUFFER_SIZE_NAME]
+                # Add a dummy color byte to match the 33-byte format
+                check_name = check_name + struct.pack('B', 0)
+                sock.send(check_name)
                 return sock.recv(1) == Struct.OK_MESSAGE
 
         except socket.error as e:
