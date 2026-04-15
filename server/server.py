@@ -244,12 +244,18 @@ class Server:
                 conn,addr = self._socket.accept()
                 conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                 conn.send(Struct.OK_MESSAGE)
-                data = conn.recv(Struct.BUFFER_SIZE_NAME)
+                data = conn.recv(Struct.BUFFER_SIZE_NAME + 1)  # +1 for tank_color
 
                 try:
                     if data != b'': #NAME PLAYER
+                        # Separate name and tank_color
+                        tank_color = 0
+                        if len(data) > Struct.BUFFER_SIZE_NAME:
+                            tank_color = data[-1]  # Last byte is tank_color
+                            data = data[:-1]  # Remove tank_color byte
+                        
                         data = Struct.unpack(data)
-                        logger.warning(f"ADD NEW_CONEXIONS: {data}")
+                        logger.warning(f"ADD NEW_CONEXIONS: {data} with tank_color: {tank_color}")
                         if data.find("-c") > -1:
                             if data[:-2] in self._filter_name:
                                 conn.send(Struct.USER_NOT_AVAILABLE)
@@ -282,7 +288,8 @@ class Server:
                                     "cannon_x":338,
                                     "cannon_y":692,
                                     "angle":0,
-                                    "angle_cannon":0
+                                    "angle_cannon":0,
+                                    "tank_color": tank_color
                                 })
                         else:
                             player = searching_player[0]
@@ -293,6 +300,7 @@ class Server:
                             player["x"] = x
                             player["y"] = y
                             player["position"] = current
+                            player["tank_color"] = tank_color  # Update tank_color
 
                         player["conn"] = conn
                         """Current Player in Queue."""

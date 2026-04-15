@@ -54,7 +54,7 @@ class Game:
         
         self.laser_timers = {}
 
-        self.network = NetworkComponent(addr,player_name) if addr is not None else None
+        self.network = NetworkComponent(addr, player_name, tank_color) if addr is not None else None
         self._player_number = self.network.player_number if addr is not None else 0
         self.tank_color = tank_color
         self.positions = {}
@@ -254,7 +254,8 @@ class Game:
                 if (recv.get("status") == Struct.NEW_PLAYER or
                         recv.get("status") == Struct.OLD_PLAYER):
                     position = recv["position"]
-                    player = Player((recv["x"],recv["y"]), position, cannon_type = type_guns.get("BASIC"))
+                    tank_color = recv.get("tank_color", 0)
+                    player = Player((recv["x"],recv["y"]), position, cannon_type = type_guns.get("BASIC"), tank_color=tank_color)
                     player.name = recv.get("name", f"Player {position}")  # Establecer el nombre del jugador
                     self.players[position] = player
 
@@ -286,7 +287,8 @@ class Game:
                     
 
                     else:
-                        player = Player((recv["x"], recv["y"]), position, cannon_type=type_guns.get("BASIC"))
+                        tank_color = recv.get("tank_color", 0)
+                        player = Player((recv["x"], recv["y"]), position, cannon_type=type_guns.get("BASIC"), tank_color=tank_color)
                         player.name = recv.get("name", f"Player {position}")  # Establecer el nombre del jugador
                         self.players[position] = player
 
