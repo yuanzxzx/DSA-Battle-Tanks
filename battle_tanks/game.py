@@ -184,8 +184,6 @@ class Game:
         dt = 1/60
 
         self._powerups.update()
-        self._landmines.update(list(Collision.players), 
-                            self.network.name if self.network else "local")
         
         player_rect = pg.Rect(self.player.rect.x, self.player.rect.y, 40, 40)
         for pu in [p for p in self._powerups if player_rect.colliderect(p.rect)]:
@@ -198,13 +196,22 @@ class Game:
             
             self.add_notification("You got a Landmine!")
         
+        active_tanks = [
+            {"x": p.rect.centerx, "y": p.rect.centery, "id": p.player_number, "obj": p} 
+            for p in self.players.values()
+        ]
+        
+        self._landmines.update(active_tanks, self._player_number)
+        
         for mine in list(self._landmines):
-            if mine.check_trigger(list(Collision.players)):
-                for p in Collision.players:
-                    dist = math.sqrt((p["x"] - mine.world_x)**2 + 
-                                    (p["y"] - mine.world_y)**2)
+            if mine.check_trigger(active_tanks):
+                for p in active_tanks:
+                    dist = math.sqrt((p["x"] - mine.world_x)**2 + (p["y"] - mine.world_y)**2)
                     if dist < LandMine.EXPLOSION_RADIUS:
-                        p["damage_indicator"] += LandMine.DAMAGE * (1 - dist / LandMine.EXPLOSION_RADIUS)
+                        if p["obj"].player_number == self._player_number:
+                            damage_taken = LandMine.DAMAGE * (1 - dist / LandMine.EXPLOSION_RADIUS)
+                            p["obj"].local_mine_damage = getattr(p["obj"], "local_mine_damage", 0) + damage_taken
+                
                 mine.kill()
                 self._spawn_particles(mine.world_x, mine.world_y, count=20)
                 SOUND_BOOM.play()
