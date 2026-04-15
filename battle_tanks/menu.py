@@ -18,11 +18,8 @@ class Menu:
 
 
     def __init__(self, main_surface: pg.Surface):
-        self.select_option = None
-        self.position:int = 0
         self.main_surface = main_surface
         self.clock = pg.time.Clock()
-        self.cover = None
         self.angle = 0
         self.angle_cannon = 0
         self.selected_tank_color = 0  # Default to blue
@@ -32,13 +29,9 @@ class Menu:
         # Scale to fit the screen
         self.background_image = pg.transform.scale(self.background_image, (self.main_surface.get_width(), self.main_surface.get_height()))
     
-        self.options:Dict[int,dict] =  {
-            # 1:{
-            #     "text_draw": Text((200,100),"TESTING MODE", font_size=45, color=NEU),
-            #     "action": "SINGLE_PLAYER_MODE"
-            # },
-            2:{
-                "text_draw": TextComponent((300,250),"MULTIPLAYER MODE", font_size=45, color=NEU),
+        self.options: Dict[int, dict] = {
+            2: {
+                "text_draw": TextComponent((300, 250), "MULTIPLAYER MODE", font_size=45, color=NEU),
                 "action": "MULTIPLAYER_MODE"
             },
         }
@@ -60,9 +53,11 @@ class Menu:
         name_rect = pg.Rect(input_x, 270, input_width, input_height)
         ip_rect = pg.Rect(input_x, 330, input_width, input_height)
         port_rect = pg.Rect(input_x, 390, input_width, input_height)
-        enter_label = TextComponent((center_x, 490), "ENTER", status, font_size=36)
-        enter_label.update()
-        enter_rect = enter_label._rect.inflate(30, 18)
+        
+        # Create enter button rect
+        enter_text_temp = TextComponent((center_x, 490), "ENTER", status, font_size=36)
+        enter_text_temp.update()
+        enter_rect = enter_text_temp._rect.inflate(30, 18)
         
         # Cursor blink indicator
         cursor_blink_time = 0
@@ -119,46 +114,29 @@ class Menu:
                                 color_picker_expanded = False
                                 color_clicked = True
                                 break
-                        if not color_clicked:
-                            if port_rect.collidepoint(mouse_pos):
-                                option_select = 0
-                            elif ip_rect.collidepoint(mouse_pos):
-                                option_select = 1
-                            elif name_rect.collidepoint(mouse_pos):
-                                option_select = 2
-                            elif enter_rect.collidepoint(mouse_pos):
-                                try:
-                                    if len(user_text) > 0 and len(name) > 0:
-                                        check_name = NetworkComponent.check_name((ip_text, int(user_text)), name)
-                                        if check_name:
-                                            game = Game((ip_text, int(user_text)), game_screen, name, self.selected_tank_color)
-                                            if game.network.player_data != Struct.USER_NOT_AVAILABLE:
-                                                return game
-                                        else:
-                                            status = RED_STATUS
-                                except ConnectionRefusedError as e:
-                                    print(e)
+                        if color_clicked:
+                            continue  # Skip form field checks if color was selected
+                    
+                    # Check form field clicks (works regardless of color_picker_expanded state)
+                    if port_rect.collidepoint(mouse_pos):
+                        option_select = 0
+                    elif ip_rect.collidepoint(mouse_pos):
+                        option_select = 1
+                    elif name_rect.collidepoint(mouse_pos):
+                        option_select = 2
+                    elif enter_rect.collidepoint(mouse_pos):
+                        try:
+                            if len(user_text) > 0 and len(name) > 0:
+                                check_name = NetworkComponent.check_name((ip_text, int(user_text)), name)
+                                if check_name:
+                                    game = Game((ip_text, int(user_text)), game_screen, name, self.selected_tank_color)
+                                    if game.network.player_data != Struct.USER_NOT_AVAILABLE:
+                                        return game
+                                else:
                                     status = RED_STATUS
-                    else:
-                        if port_rect.collidepoint(mouse_pos):
-                            option_select = 0
-                        elif ip_rect.collidepoint(mouse_pos):
-                            option_select = 1
-                        elif name_rect.collidepoint(mouse_pos):
-                            option_select = 2
-                        elif enter_rect.collidepoint(mouse_pos):
-                            try:
-                                if len(user_text) > 0 and len(name) > 0:
-                                    check_name = NetworkComponent.check_name((ip_text, int(user_text)), name)
-                                    if check_name:
-                                        game = Game((ip_text, int(user_text)), game_screen, name, self.selected_tank_color)
-                                        if game.network.player_data != Struct.USER_NOT_AVAILABLE:
-                                            return game
-                                    else:
-                                        status = RED_STATUS
-                            except ConnectionRefusedError as e:
-                                print(e)
-                                status = RED_STATUS
+                        except ConnectionRefusedError as e:
+                            print(e)
+                            status = RED_STATUS
 
                 elif event.type == pg.KEYDOWN:
                     if event.key == pg.K_TAB:
@@ -457,7 +435,6 @@ class Menu:
     def draw(self):
         """ Draw options"""
         self.main_surface.blit(self.background_image, (0, 0))
-        
         
         mouse_pos = pg.mouse.get_pos()
 
