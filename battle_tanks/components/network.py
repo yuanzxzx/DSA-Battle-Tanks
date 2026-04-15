@@ -35,7 +35,7 @@ class NetworkComponent:
         if ok == Struct.OK_MESSAGE:
             # Send name and tank_color
             name_data = Struct.pack(self.name)
-            color_data = struct.pack('B', self.tank_color)
+            color_data = struct.pack('B', int(self.tank_color))
             self._socket_tcp.send(name_data + color_data)
             lvl_map = self._socket_tcp.recv(Struct.BUFFER_SIZE_LVL_MAP)
             if lvl_map == Struct.USER_NOT_AVAILABLE:

@@ -145,12 +145,11 @@ class Struct:
 
         size_data = Struct.pack_single_data(Struct.SIZE_PLAYER)
         size_data += struct.pack('BBhhhhbB', status if status is not None else Struct.UPDATE_PLAYER,
-                           current, int(pos_x), int(pos_y), angle, angle_cannon, damage_indicator, tank_color)
+                           current, int(pos_x), int(pos_y), int(angle), int(angle_cannon), int(damage_indicator), int(tank_color))
 
         return size_data
 
 
-    @staticmethod
     @staticmethod
     def unpack_all_data(data: bytes) -> list:
         index = 0
@@ -212,8 +211,8 @@ class Struct:
     @staticmethod
     def pack_tile(data: dict):
         data_size = Struct.pack_single_data(Struct.BUFFER_SIZE_EVENT_RESPONSE)
-        data_size += struct.pack("bhhhh", data["type"],data["x"],
-                           data["y"],data["w"],data["h"])
+        data_size += struct.pack("bhhhh", int(data["type"]), int(data["x"]),
+                           int(data["y"]), int(data["w"]), int(data["h"]))
 
         return data_size
 
