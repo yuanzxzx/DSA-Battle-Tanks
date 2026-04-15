@@ -194,3 +194,35 @@ class Collision:
             # Update the body rect immediately so the next block check is accurate
             body.x = player["x"]
             body.y = player["y"]
+
+    @classmethod
+    def get_laser_intersections(cls, player_data: dict, laser_range: int):
+        """Returns a list of bricks and players currently hit by the laser."""
+        start_pos = cls.calculate_bullet_position(player_data, 0)
+        end_pos = cls.calculate_bullet_position(player_data, laser_range)
+        
+        hit_objects = {"players": [], "bricks": []}
+        steps = 20  # Increase steps for better precision with a long laser
+        
+        for step in range(steps + 1):
+            t = step / steps
+            point = (
+                start_pos[0] + t * (end_pos[0] - start_pos[0]),
+                start_pos[1] + t * (end_pos[1] - start_pos[1])
+            )
+
+            for brick in cls.bricks:
+                if brick.rect.collidepoint(point):
+                    if brick not in hit_objects["bricks"]:
+                        hit_objects["bricks"].append(brick)
+
+            for other_player in cls.players:
+                if other_player.get("name") == player_data.get("name"):
+                    continue
+                # Assuming player hitboxes are roughly 32x32 based on Player.SIZE_BODY_RECT
+                p_rect = pg.Rect(other_player["x"], other_player["y"], 32, 32)
+                if p_rect.collidepoint(point):
+                    if other_player not in hit_objects["players"]:
+                        hit_objects["players"].append(other_player)
+        
+        return hit_objects
