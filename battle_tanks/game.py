@@ -167,15 +167,7 @@ class Game:
             self.mine_cooldown = 30  
             
         if self.mine_cooldown > 0:
-            self.mine_cooldown -= 1keys = pg.key.get_pressed()
-        if keys[pg.K_m] and self.mine_cooldown == 0 and self.landmine_count > 0:
-            self.place_landmine()
-            self.add_notification("Landmine Placed!")
-            self.mine_cooldown = 30  
-            
-        if self.mine_cooldown > 0:
             self.mine_cooldown -= 1
-        if self.player.laser_active:
                     # 1. Get objects currently in the laser's path
                     hits = Collision.get_laser_intersections(self.player.telescopic_sight(), 300)
                     
