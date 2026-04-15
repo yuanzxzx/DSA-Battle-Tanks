@@ -403,7 +403,7 @@ class Menu:
                     "ACTIONS:",
                     "O - Fire Bullet",
                     "K - Burst Fire (15s Cooldown)",
-                    "L - Laser (Hold)"
+                    "M - Place Landmine"
                 ]
                 
                 y_offset = 55
