@@ -2,6 +2,7 @@
 """ this is the manager game """
 
 import sys
+import math
 from typing import Tuple, Dict, Union, List
 import pygame as pg
 import random
@@ -197,7 +198,7 @@ class Game:
             self._powerups.add(PowerUp(rx, ry))
             
             self.add_notification("You got a Landmine!")
-                
+        
         for mine in list(self._landmines):
             if mine.check_trigger(list(Collision.players)):
                 for p in Collision.players:
@@ -227,8 +228,20 @@ class Game:
                         })
                         self.network.send_move_tcp(event_data)
                     SOUND_BOOM.play()
+                    # Camera shake when hitting a brick
+                    self.camera.shake(duration=10, intensity=3)
                     brick.kill()
                 bullet.kill()
+            
+            # Check bullet collisions with other players
+            for player in self.players.values():
+                if player.player_number == self._player_number:
+                    continue  # Don't check collision with self
+                if bullet.rect.colliderect(player.rect):
+                    # Camera shake when hitting another player
+                    self.camera.shake(duration=15, intensity=4)
+                    bullet.kill()
+                    break
                 
         """ SEND MOVES BYTES """
         self.move.keys()
@@ -250,6 +263,7 @@ class Game:
                     
                     if self.players.get(position):
                         player = self.players[position]
+                        old_damage = player.damage
 
                         player.rect.x = recv["x"]
                         player.rect.y = recv["y"]
@@ -262,6 +276,10 @@ class Game:
                         player.angle = recv["angle"]
                         player.angle_cannon = recv["angle_cannon"]
                         player.damage = recv["damage_indicator"]
+                        
+                        # Camera shake when the player takes damage
+                        if recv["damage_indicator"] > old_damage and player.player_number == self._player_number:
+                            self.camera.shake(duration=12, intensity=5)
                         
                         player.laser_active = recv.get("laser_active", getattr(player, "laser_active", False))
 
