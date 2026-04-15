@@ -197,6 +197,16 @@ class Server:
                                     Collision.bricks.remove(brick)
                                     break
                             q.put(data)
+                            
+                        elif event[0] == 98: 
+                            q.put(data) 
+                            
+                        elif event[0] == 99: 
+                            damage = event[3] 
+                            player_id = event[4] 
+                            if player_id in self._data:
+                                self._data[player_id]["damage_indicator"] += damage
+                            q.put(data) 
 
                     elif data == Struct.LASER_ON_EVENT:
                         player_data["laser_active"] = True

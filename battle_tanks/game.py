@@ -138,6 +138,16 @@ class Game:
             self._landmines.add(mine)
             self.landmine_count -= 1
             
+            if self.network:
+                event_data = Struct.pack_tile({
+                    "type": 98, 
+                    "x": mine.world_x,
+                    "y": mine.world_y,
+                    "w": self._player_number,
+                    "h": 0
+                })
+                self.network.send_move_tcp(event_data)
+            
     def break_brick_locally(self, brick):
         """Handles the local visual removal of a brick."""
         if brick in self._bricks:
@@ -209,8 +219,19 @@ class Game:
                     dist = math.sqrt((p["x"] - mine.world_x)**2 + (p["y"] - mine.world_y)**2)
                     if dist < LandMine.EXPLOSION_RADIUS:
                         if p["obj"].player_number == self._player_number:
-                            damage_taken = LandMine.DAMAGE * (1 - dist / LandMine.EXPLOSION_RADIUS)
-                            p["obj"].local_mine_damage = getattr(p["obj"], "local_mine_damage", 0) + damage_taken
+                            damage_taken = int(LandMine.DAMAGE * (1 - dist / LandMine.EXPLOSION_RADIUS))
+                            
+                            if self.network:
+                                event_data = Struct.pack_tile({
+                                    "type": 99, 
+                                    "x": mine.world_x,
+                                    "y": mine.world_y,
+                                    "w": damage_taken,  
+                                    "h": self._player_number 
+                                })
+                                self.network.send_move_tcp(event_data)
+                            else:
+                                p["obj"].damage += damage_taken 
                 
                 mine.kill()
                 self._spawn_particles(mine.world_x, mine.world_y, count=20)
@@ -307,14 +328,28 @@ class Game:
                         SOUND_BOOM.play()
                         sprite_brick.kill()
                         
-                    # Also remove from the collision system
                     collision_brick = find_sprite(brick_rect, Collision.bricks)
                     if collision_brick:
                         Collision.bricks.remove(collision_brick)
 
                 elif recv.get("status") == Struct.BLOCK:
-                    Brick.boom() #Change for Block sound
+                    Brick.boom() 
 
+                elif recv.get("status") == 98:
+                    owner_id = recv["w"]
+                    if owner_id != self._player_number: 
+                        enemy_mine = LandMine(recv["x"], recv["y"], owner_id)
+                        self._landmines.add(enemy_mine)
+
+                elif recv.get("status") == 99:
+                    hit_player_id = recv["h"]
+                    if hit_player_id != self._player_number:
+                        self._spawn_particles(recv["x"], recv["y"], count=20)
+                        SOUND_BOOM.play()
+        
+                        for mine in list(self._landmines):
+                            if mine.world_x == recv["x"] and mine.world_y == recv["y"]:
+                                mine.kill()
 
         self.camera.update(self.player)
 
