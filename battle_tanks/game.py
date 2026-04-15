@@ -223,6 +223,32 @@ class Game:
         self._particles.update()
         dt = 1/60
 
+        self._powerups.update()
+        self._landmines.update(list(Collision.players), 
+                            self.network.name if self.network else "local")
+        
+        player_rect = pg.Rect(self.player.rect.x, self.player.rect.y, 40, 40)
+        for pu in [p for p in self._powerups if player_rect.colliderect(p.rect)]:
+            self.landmine_count += 1
+            pu.kill()
+            
+            rx = random.randint(100, 1000)
+            ry = random.randint(100, 1000)
+            self._powerups.add(PowerUp(rx, ry))
+            
+            self.add_notification("You got a Landmine!")
+                
+        for mine in list(self._landmines):
+            if mine.check_trigger(list(Collision.players)):
+                for p in Collision.players:
+                    dist = math.sqrt((p["x"] - mine.world_x)**2 + 
+                                    (p["y"] - mine.world_y)**2)
+                    if dist < LandMine.EXPLOSION_RADIUS:
+                        p["damage_indicator"] += LandMine.DAMAGE * (1 - dist / LandMine.EXPLOSION_RADIUS)
+                mine.kill()
+                self._spawn_particles(mine.world_x, mine.world_y, count=20)
+                SOUND_BOOM.play()
+
         # Check bullet collisions with bricks (destructible objects)
         for bullet in self._bullets:
             hit_bricks = pg.sprite.spritecollide(bullet, self._bricks, False,)
