@@ -326,11 +326,14 @@ class Game:
 
     def draw(self, main_screen: pg.Surface):
         """ Draw the player and scene. """
+        # 1. DRAW BACKGROUND
         self.SCREEN.blit(self.tile_image,self.camera.apply_rect(self.tile_rect))
 
+        # 2. DRAW BULLETS
         for bullet in self._bullets:
             self.SCREEN.blit(bullet.image, self.camera.apply(bullet))
 
+        # 3. DRAW PLAYERS, LASERS, AND UI BARS
         for _,player in self.players.items():
             # Dibujar el tanque
             tank_rect = self.camera.apply(player)
@@ -389,19 +392,47 @@ class Game:
                 pg.draw.rect(self.SCREEN, (0, 255, 255), 
                             (health_x, energy_y, current_energy_width, health_height))
 
+                inv_surface = font.render(f"Mines: {getattr(self, 'landmine_count', 0)}", True, (255, 255, 0))
+                inv_rect = inv_surface.get_rect()
+                inv_rect.centerx = tank_rect.centerx
+                inv_rect.top = energy_y + health_height + 2
+                self.SCREEN.blit(inv_surface, inv_rect)
+
         for brick in self._bricks:
             self.SCREEN.blit(brick.image, self.camera.apply(brick))
 
         for particle in self._particles:
             self.SCREEN.blit(particle.image, self.camera.apply(particle))
-            
-        for bullet in self._bullets:
-            self.SCREEN.blit(bullet.image, self.camera.apply(bullet))
 
+
+        for pu in self._powerups:
+            self.SCREEN.blit(pu.image, self.camera.apply(pu))
+        for mine in self._landmines:
+            self.SCREEN.blit(mine.image, self.camera.apply(mine))
+    
         telescopic_pos = Collision.calculate_bullet_position(self.player.telescopic_sight(), 100)
         telescopic_rect = self.camera.apply_rect(pg.rect.Rect(telescopic_pos[0],telescopic_pos[1],20,20))
-
         self.SCREEN.blit(Player.TELESCOPIC_SIGH, telescopic_rect)
+
+        y_offset = 60 
+        for notif in getattr(self, "notifications", [])[:]:
+            if notif["timer"] > 0:
+                alpha = min(255, notif["timer"] * 4) 
+                
+                notif_surface = self._font.render(notif["text"], True, (255, 255, 0))
+                notif_surface.set_alpha(alpha) 
+                
+                notif_rect = notif_surface.get_rect(center=(self.WIDTH // 2, y_offset))
+                
+                bg_rect = notif_rect.inflate(20, 10)
+                pg.draw.rect(self.SCREEN, (0, 0, 0, 150), bg_rect, border_radius=5)
+                self.SCREEN.blit(notif_surface, notif_rect)
+                
+                notif["timer"] -= 1
+                y_offset += 35 
+            else:
+                self.notifications.remove(notif)
+
         main_screen.blit(self.SCREEN, (0,0))
         
 
