@@ -138,6 +138,16 @@ class Game:
             self._landmines.add(mine)
             self.landmine_count -= 1
             
+            if self.network:
+                event_data = Struct.pack_tile({
+                    "type": 98, 
+                    "x": mine.world_x,
+                    "y": mine.world_y,
+                    "w": self._player_number,
+                    "h": 0
+                })
+                self.network.send_move_tcp(event_data)
+            
     def break_brick_locally(self, brick):
         """Handles the local visual removal of a brick."""
         if brick in self._bricks:
