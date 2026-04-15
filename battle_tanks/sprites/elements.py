@@ -112,10 +112,10 @@ class LandMine(pg.sprite.Sprite):
     EXPLOSION_RADIUS = 75
     DAMAGE = 50
 
-    def __init__(self, x: int, y: int, owner: str):
+    def __init__(self, x: int, y: int, owner_id: int):
         super().__init__()
-        self.owner = owner
-
+        self.owner_id = owner_id 
+        
         self.world_x = x
         self.world_y = y
 
@@ -130,13 +130,13 @@ class LandMine(pg.sprite.Sprite):
         self.active = False
         self.activation_timer = 60  
 
-    def update(self, players: list, local_name: str):
+    def update(self, players: list, local_id: int):
         if self.activation_timer > 0:
             self.activation_timer -= 1
         else:
             self.active = True
 
-        if self.owner == local_name:
+        if self.owner_id == local_id:
             self.image.set_alpha(150)
         else:
             self.image.set_alpha(255)
@@ -146,12 +146,11 @@ class LandMine(pg.sprite.Sprite):
             return False
 
         for p in players:
-            if p.get("name") == self.owner:
+            if p.get("id") == self.owner_id:
                 continue
 
             dist = math.sqrt((p["x"] - self.world_x)**2 + (p["y"] - self.world_y)**2)
-            
-            if dist < 25: 
+            if dist < 25:  
                 return True
                 
         return False
