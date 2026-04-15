@@ -48,6 +48,7 @@ class Game:
                  screen:pg.Surface,
                  player_name="John",
                  tank_color:int=0):
+                 self.laser_timers = {}
 
         self.network = NetworkComponent(addr,player_name) if addr is not None else None
         self._player_number = self.network.player_number if addr is not None else 0
@@ -109,8 +110,43 @@ class Game:
                 Collision.bricks.add(brick)  # Also add to collision system
 
     def update(self):
+        dt = 1/60
         """ Update Game"""
-
+        if self.player.laser_active:
+                    # 1. Get objects currently in the laser's path
+                    hits = Collision.get_laser_intersections(self.player.telescopic_sight(), 300)
+                    
+                    # 2. Process Brick Damage (Destroy after 1 second)
+                    for brick in hits["bricks"]:
+                        brick_id = f"brick_{brick.rect.x}_{brick.rect.y}"
+                        self.laser_timers[brick_id] = self.laser_timers.get(brick_id, 0) + dt
+                        
+                        if self.laser_timers[brick_id] >= 1.0:
+                            self._bricks.remove(brick)
+                            Collision.bricks.remove(brick)
+                            self._spawn_particles(brick.rect.centerx, brick.rect.centery)
+                            SOUND_BOOM.play()
+                            brick.kill()
+                            del self.laser_timers[brick_id]
+        
+                    # 3. Process Player Damage (2 hearts/sec)
+                    # Standard DAMAGE is 10. If 100 is MAX_HEALTH, 2 hearts is roughly 20 damage.
+                    for enemy in hits["players"]:
+                        enemy_id = f"player_{enemy['position']}"
+                        self.laser_timers[enemy_id] = self.laser_timers.get(enemy_id, 0) + dt
+                        
+                        if self.laser_timers[enemy_id] >= 1.0:
+                            enemy["damage_indicator"] += 20 
+                            self.laser_timers[enemy_id] = 0 # Reset timer for the next second
+                            
+                            # Check for death/respawn logic similar to collision.py
+                            if enemy["damage_indicator"] >= Player.MAX_DAMAGE:
+                                # Respawn logic...
+                                enemy["damage_indicator"] = 0
+                else:
+                    # Clear timers if laser is turned off
+                    self.laser_timers.clear()
+                    
         for key, player in self.players.items():
             if player.fire:
                 SHOT.play()
