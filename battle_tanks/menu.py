@@ -68,6 +68,10 @@ class Menu:
         cursor_blink_time = 0
         cursor_blink_interval = 500  # milliseconds
         
+        # Help button setup for this screen
+        help_button_rect = pg.Rect(20, self.main_surface.get_height() - 70, 50, 50)
+        help_popup_visible = False
+        
         # Color picker button setup
         color_picker_expanded = False
         tank_preview_scale = 150
@@ -95,8 +99,16 @@ class Menu:
 
                 elif event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                     mouse_pos = event.pos
+                    # Check help button click first (always allow toggle)
+                    if help_button_rect.collidepoint(mouse_pos):
+                        help_popup_visible = not help_popup_visible
+                    # Check if clicking outside popup to close it
+                    elif help_popup_visible:
+                        popup_rect = pg.Rect((self.main_surface.get_width() - 420) // 2, (self.main_surface.get_height() - 360) // 2, 420, 360)
+                        if not popup_rect.collidepoint(mouse_pos):
+                            help_popup_visible = False
                     # Check color button click
-                    if color_button_rect.collidepoint(mouse_pos):
+                    elif color_button_rect.collidepoint(mouse_pos):
                         color_picker_expanded = not color_picker_expanded
                     # Check color picker clicks when expanded
                     elif color_picker_expanded:
@@ -311,7 +323,7 @@ class Menu:
             text_port.draw(self.main_surface)
             text_enter.draw(self.main_surface)
 
-            if port_rect.collidepoint(pg.mouse.get_pos()) or ip_rect.collidepoint(pg.mouse.get_pos()) or name_rect.collidepoint(pg.mouse.get_pos()) or enter_rect.collidepoint(pg.mouse.get_pos()):
+            if port_rect.collidepoint(pg.mouse.get_pos()) or ip_rect.collidepoint(pg.mouse.get_pos()) or name_rect.collidepoint(pg.mouse.get_pos()) or enter_rect.collidepoint(pg.mouse.get_pos()) or help_button_rect.collidepoint(pg.mouse.get_pos()):
                 pg.mouse.set_cursor(pg.SYSTEM_CURSOR_HAND)
             else:
                 pg.mouse.set_cursor(pg.SYSTEM_CURSOR_ARROW)
@@ -368,6 +380,65 @@ class Menu:
                     pg.draw.circle(self.main_surface, colors[color_id], color_rect.center, color_circle_size // 2)
                     pg.draw.circle(self.main_surface, border_color, color_rect.center, color_circle_size // 2, border_width)
 
+            # Draw help button
+            help_button_color = (60, 100, 60) if help_popup_visible else (40, 70, 40)
+            help_button_border = (255, 255, 255) if help_popup_visible else NEU
+            pg.draw.rect(self.main_surface, help_button_color, help_button_rect, border_radius=8)
+            pg.draw.rect(self.main_surface, help_button_border, help_button_rect, 2, border_radius=8)
+            
+            # Draw question mark
+            question_mark = TextComponent((help_button_rect.centerx, help_button_rect.centery), "?", color=(255, 255, 255), font_size=30)
+            question_mark.update()
+            question_mark.draw(self.main_surface)
+            
+            # Draw help popup
+            if help_popup_visible:
+                popup_width = 420
+                popup_height = 360
+                popup_x = (self.main_surface.get_width() - popup_width) // 2
+                popup_y = (self.main_surface.get_height() - popup_height) // 2
+                
+                # Semi-transparent background
+                popup_bg = pg.Surface((popup_width, popup_height))
+                popup_bg.set_alpha(240)
+                popup_bg.fill((20, 30, 20))
+                self.main_surface.blit(popup_bg, (popup_x, popup_y))
+                pg.draw.rect(self.main_surface, (255, 255, 255), (popup_x, popup_y, popup_width, popup_height), 2, border_radius=10)
+                
+                # Title
+                title = TextComponent((popup_x + popup_width // 2, popup_y + 20), "GAME CONTROLS", color=(255, 255, 255), font_size=28)
+                title.update()
+                title.draw(self.main_surface)
+                
+                # Keybinds
+                controls = [
+                    "MOVEMENT:",
+                    "W - Move Forward",
+                    "S - Move Backward", 
+                    "A - Move Right",
+                    "D - Move Left",
+                    "",
+                    "CANNON:",
+                    "I - Rotate Right",
+                    "P - Rotate Left",
+                    "",
+                    "ACTIONS:",
+                    "O - Fire Bullet (Hold to Rapid Fire)",
+                    "L - Laser (Hold)"
+                ]
+                
+                y_offset = 65
+                for control in controls:
+                    if control == "":
+                        y_offset += 8
+                        continue
+                    color = (255, 255, 0) if ":" in control else (200, 200, 200)
+                    font_size = 20 if ":" in control else 18
+                    text = TextComponent((popup_x + popup_width // 2, popup_y + y_offset), control, color=color, font_size=font_size)
+                    text.update()
+                    text.draw(self.main_surface)
+                    y_offset += 24
+
             pg.display.flip()
             self.clock.tick(60)
 
@@ -378,7 +449,7 @@ class Menu:
 
 
     def update(self, main_game) -> Game:
-        """Go directly to multiplayer connect menu."""
+        """Go directly to multiplayer mode."""
         return self.multiplayer_mode(main_game)
 
 
