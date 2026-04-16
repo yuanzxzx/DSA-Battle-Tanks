@@ -3,8 +3,8 @@ from typing import Tuple
 
 
 BLACK = (7, 6, 0)
-RED = (234, 82, 111)
-WHITE = (247,247, 255)
+RED = (199, 24, 24)
+WHITE = (247, 247, 255)
 BLUE = (39, 154, 241)
 ORANGE = (255, 165, 0)
 YELLOW = (255, 255, 0)
