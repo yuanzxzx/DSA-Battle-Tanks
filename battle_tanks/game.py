@@ -278,6 +278,8 @@ class Game:
             recv_all:List[dict] = self.network.recv_to_queue()
 
             for recv in recv_all:
+                if not recv:
+                    continue
                 if (recv.get("status") == Struct.NEW_PLAYER or
                         recv.get("status") == Struct.OLD_PLAYER):
                     position = recv["position"]
