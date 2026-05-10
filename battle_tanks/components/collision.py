@@ -196,6 +196,22 @@ class Collision:
             body.y = player["y"]
 
     @classmethod
+    def check_bullet_at_point(cls, x: float, y: float):
+        """ SERVER SIDE: Checks if a single X/Y point touches a brick """
+        for brick in list(cls.bricks):
+            if brick.rect.collidepoint(x, y):
+                # We hit a wall! Return the exact packet the server needs to broadcast it
+                from battle_tanks.commons.package import Struct 
+                return Struct.pack_tile({
+                    "type": Struct.BROKE_BRICK,
+                    "x": brick.rect.x,
+                    "y": brick.rect.y,
+                    "w": brick.rect.w,
+                    "h": brick.rect.h
+                })
+        return None
+
+    @classmethod
     def get_laser_intersections(cls, player_data: dict, laser_range: int):
         """Returns a list of bricks and players currently hit by the laser."""
         start_pos = cls.calculate_bullet_position(player_data, 0)
