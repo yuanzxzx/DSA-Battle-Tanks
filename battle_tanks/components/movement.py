@@ -7,15 +7,13 @@ from battle_tanks.commons.package import Struct
 
 
 class MovementComponent:
-    """
-        MOVES GAME COMPONENT
-    """
+    #MOVES GAME COMPONENT
     def __init__(self, network: Union[NetworkComponent,None], player:Player):
         self.network = network
         self.player = player
 
-    """ Translates input into movement """
-    def keys(self):
+    #Translates input into movement
+    def keys(self): #Gets pressed keys and adds them to actions list
         key = pg.key.get_pressed()
         actions = []
         if key[pg.K_d]:
@@ -39,4 +37,4 @@ class MovementComponent:
 
         # network transmission (queues action pressed to be processed on a server if internet connection is present)
         if self.network and len(actions) > 0:
-            self.network.send_keys(actions)
+            self.network.send_keys(actions) 

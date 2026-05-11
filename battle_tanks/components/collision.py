@@ -9,7 +9,7 @@ from collections.abc import Callable
 from battle_tanks.sprites import Brick, Player, Block
 
 
-class Collision:
+class Collision: # Manages collisions and level state
     bricks = pg.sprite.Group()
     players:List[dict] = []
     size_screen:tuple = (0,0)
@@ -19,52 +19,43 @@ class Collision:
 
 
     @staticmethod
-    def calculate_bullet_position(player_data:dict, distance:int) -> Tuple[int,int]:
-        """
-        :param player_data: getting x,y and angle_cannon
-        :param distance: range of bullet
+    def calculate_bullet_position(player_data:dict, distance:int) -> Tuple[int,int]: # Calcs target pos from angle and dist
+        radian_angle = math.radians(player_data["angle_cannon"]) # Convert deg to rad
+        vlx = distance * - math.sin(radian_angle) # X offset calc
+        vly = distance * - math.cos(radian_angle) # Y offset calc
 
-        """
-        radian_angle = math.radians(player_data["angle_cannon"])
-        vlx = distance * - math.sin(radian_angle)
-        vly = distance * - math.cos(radian_angle)
+        x = player_data["x"] + math.sin(radian_angle) * -30 # Start X offset from tank
+        y = player_data["y"] + math.cos(radian_angle) * -30 # Start Y offset from tank
 
-        x = player_data["x"] + math.sin(radian_angle) * -30
-        y = player_data["y"] + math.cos(radian_angle) * -30
-
-        x += vlx
-        y += vly
+        x += vlx # Add distance X
+        y += vly # Add distance Y
 
         return x, y
 
 
     @classmethod
-    def check_collision_bullet(cls, player_data: dict, collision_radius: int) -> dict:
-        """
-        :param player_data: getting x,y and angle_cannon
-        :param collision_radius: radius of collision
-        """
-        bullet_start_pos = Collision.calculate_bullet_position(player_data, 0)  # Starting position
-        bullet_end_pos = Collision.calculate_bullet_position(player_data, 100)  # End position
+    def check_collision_bullet(cls, player_data: dict, collision_radius: int) -> dict: # Raycasts bullet vs bricks
+        bullet_start_pos = Collision.calculate_bullet_position(player_data, 0) # Start pos
+        bullet_end_pos = Collision.calculate_bullet_position(player_data, 100) # End pos
 
         steps = 10
-        for step in range(steps + 1):
-            t = step / steps
-            bullet_pos = (
+        for step in range(steps + 1): # Raycast loop
+            t = step / steps # Interp factor
+            bullet_pos = ( # Cur ray point
                 bullet_start_pos[0] + t * (bullet_end_pos[0] - bullet_start_pos[0]),
                 bullet_start_pos[1] + t * (bullet_end_pos[1] - bullet_start_pos[1])
             )
 
             for brick in cls.bricks:
                 brick: Brick
-                target_pos = brick.rect.center
+                target_pos = brick.rect.center # Target center
                 distance = math.sqrt((bullet_pos[0] - target_pos[0]) ** 2 +
-                                     (bullet_pos[1] - target_pos[1]) ** 2)
-                collided = distance <= collision_radius
+                                     (bullet_pos[1] - target_pos[1]) ** 2) # Dist calc
+                collided = distance <= collision_radius # Dist check
                 if collided:
                     if isinstance(brick, Brick):
                         brick.kill()
-                        return {
+                        return { # Return broken brick
                             "type":5,
                             "x": brick.rect.x,
                             "y": brick.rect.y,
@@ -76,43 +67,37 @@ class Collision:
 
 
     @classmethod
-    def check_collision_player(cls, player_data: dict, collision_radius: int) -> dict:
-        """
-        :param player_data: getting x,y and angle_cannon
-        :param collision_radius: radius of collision
-        """
-        bullet_start_pos = Collision.calculate_bullet_position(player_data, 0)  # Starting position
-        bullet_end_pos = Collision.calculate_bullet_position(player_data, 100)  # End position
+    def check_collision_player(cls, player_data: dict, collision_radius: int) -> dict: # Raycasts bullet vs players
+        bullet_start_pos = Collision.calculate_bullet_position(player_data, 0) # Start pos
+        bullet_end_pos = Collision.calculate_bullet_position(player_data, 100) # End pos
 
         steps = 10
-        for step in range(steps + 1):
-            t = step / steps
-            bullet_pos = (
+        for step in range(steps + 1): # Raycast loop
+            t = step / steps # Interp factor
+            bullet_pos = ( # Cur ray point
                 bullet_start_pos[0] + t * (bullet_end_pos[0] - bullet_start_pos[0]),
                 bullet_start_pos[1] + t * (bullet_end_pos[1] - bullet_start_pos[1])
             )
-
-
 
             for other_player in cls.players:
                 if other_player.get("name") == player_data.get("name"):
                     continue
 
-                target_pos = (other_player["x"], other_player["y"])
+                target_pos = (other_player["x"], other_player["y"]) # Target coords
                 distance = math.sqrt((bullet_pos[0] - target_pos[0]) ** 2 +
-                                     (bullet_pos[1] - target_pos[1]) ** 2)
-                collided = distance <= collision_radius
+                                     (bullet_pos[1] - target_pos[1]) ** 2) # Dist calc
+                collided = distance <= collision_radius # Dist check
                 if collided:
-                    other_player["damage_indicator"] += Player.DAMAGE
+                    other_player["damage_indicator"] += Player.DAMAGE # Apply damage
 
-                    if other_player["damage_indicator"] >= Player.MAX_DAMAGE:
-                        random_index = random.randint(0, len(cls.positions) - 1)
-                        other_player["damage_indicator"] = 0
+                    if other_player["damage_indicator"] >= Player.MAX_DAMAGE: # Death check
+                        random_index = random.randint(0, len(cls.positions) - 1) # Rand spawn index
+                        other_player["damage_indicator"] = 0 # Reset damage
 
-                        other_player["x"] = cls.positions[random_index][0]
-                        other_player["y"] = cls.positions[random_index][1]
+                        other_player["x"] = cls.positions[random_index][0] # Respawn X
+                        other_player["y"] = cls.positions[random_index][1] # Respawn Y
 
-                    return {
+                    return { # Return hit player
                             "type":7,
                             "player": other_player,
                     }
@@ -120,18 +105,18 @@ class Collision:
         return {}
 
     @classmethod
-    def load(cls,lvl_map_tmx:str, func_tile_pack: Callable):
+    def load(cls,lvl_map_tmx:str, func_tile_pack: Callable): # Loads map and bricks
         _tile_map = pytmx.TiledMap(lvl_map_tmx)
         cls.lvl_map = pathlib.Path(lvl_map_tmx).name
         cls.size_screen = (_tile_map.width * _tile_map.tilewidth,
-                           _tile_map.height * _tile_map.tileheight)
+                           _tile_map.height * _tile_map.tileheight) # Map dims
 
-        for tile_object in _tile_map.objects:
+        for tile_object in _tile_map.objects: # Parse map objects
             if tile_object.name == "player":
-                cls.positions.append((int(tile_object.x),int(tile_object.y)))
+                cls.positions.append((int(tile_object.x),int(tile_object.y))) # Store spawn
             elif tile_object.name == "brick":
                 brick = Brick(tile_object.x,tile_object.y,tile_object.width,tile_object.height)
-                data_tile = func_tile_pack({
+                data_tile = func_tile_pack({ # Pack brick data
                     "x": brick.rect.x,
                     "y": brick.rect.y,
                     "h": brick.rect.h,
@@ -139,70 +124,52 @@ class Collision:
                     "type": 5
                 })
                 brick.data = data_tile
-
-                """
-                ONLY ADDED BRICK IN GAMESTATE.
-                """
-                cls.game_state += data_tile
-                cls.bricks.add(brick)
+                cls.game_state += data_tile # Add to initial map state
+                cls.bricks.add(brick) # Add to group
 
     @classmethod
-    def add_player(cls, player:dict):
+    def add_player(cls, player:dict): # Registers a player
         cls.players.append(player)
 
-   # In battle_tanks/components/collision.py
-
     @classmethod
-    def collide_with_objects(cls, player: dict):
-        # ... (Boundary checks remain the same)
+    def collide_with_objects(cls, player: dict): # Resolves tank AABB collision vs walls
+        body = pg.Rect(player["x"], player["y"], Player.SIZE_BODY_RECT[0], Player.SIZE_BODY_RECT[1]) # Tank rect
     
-        body = pg.Rect(player["x"], player["y"], Player.SIZE_BODY_RECT[0], Player.SIZE_BODY_RECT[1])
-    
-        # FIX: Use cls.bricks.sprites() to get currently active sprites
         for brock in cls.bricks:
-            # Check if the brick is still alive (not killed by a bullet)
             if not brock.alive():
                 continue
                 
             if not body.colliderect(brock.rect):
                 continue
         
-        # ... (Collision resolution logic remains the same)
         for brock in list(cls.bricks):
             if not body.colliderect(brock.rect):
                 continue
-            # Standard Rectangle (AABB) Collision Resolution
-            # Calculate how deeply the tank pushed into each side of the wall
-            overlap_left = brock.rect.right - body.left
-            overlap_right = body.right - brock.rect.left
-            overlap_top = brock.rect.bottom - body.top
-            overlap_bottom = body.bottom - brock.rect.top
+            overlap_left = brock.rect.right - body.left # Left intersect
+            overlap_right = body.right - brock.rect.left # Right intersect
+            overlap_top = brock.rect.bottom - body.top # Top intersect
+            overlap_bottom = body.bottom - brock.rect.top # Bottom intersect
 
-            # Find the smallest overlap (this tells us which face of the wall we hit)
-            min_overlap = min(overlap_left, overlap_right, overlap_top, overlap_bottom)
-
-            # Snap the player perfectly against the flat edge
-            if min_overlap == overlap_left:
+            min_overlap = min(overlap_left, overlap_right, overlap_top, overlap_bottom) # Shallowest penetration
+            
+            if min_overlap == overlap_left: # Snap left
                 player["x"] = brock.rect.right
-            elif min_overlap == overlap_right:
+            elif min_overlap == overlap_right: # Snap right
                 player["x"] = brock.rect.left - body.width
-            elif min_overlap == overlap_top:
+            elif min_overlap == overlap_top: # Snap top
                 player["y"] = brock.rect.bottom
-            elif min_overlap == overlap_bottom:
+            elif min_overlap == overlap_bottom: # Snap bottom
                 player["y"] = brock.rect.top - body.height
 
-            # Update the body rect immediately so the next block check is accurate
-            body.x = player["x"]
-            body.y = player["y"]
+            body.x = player["x"] # Update rect X
+            body.y = player["y"] # Update rect Y
 
     @classmethod
-    def check_bullet_at_point(cls, x: float, y: float):
-        """ SERVER SIDE: Checks if a single X/Y point touches a brick """
+    def check_bullet_at_point(cls, x: float, y: float): #Checks if the bullet has collided with the brick
         for brick in list(cls.bricks):
             if brick.rect.collidepoint(x, y):
-                # We hit a wall! Return the exact packet the server needs to broadcast it
                 from battle_tanks.commons.package import Struct 
-                return Struct.pack_tile({
+                return Struct.pack_tile({ #Returns the packet for the bullet
                     "type": Struct.BROKE_BRICK,
                     "x": brick.rect.x,
                     "y": brick.rect.y,
@@ -212,32 +179,30 @@ class Collision:
         return None
 
     @classmethod
-    def get_laser_intersections(cls, player_data: dict, laser_range: int):
-        """Returns a list of bricks and players currently hit by the laser."""
-        start_pos = cls.calculate_bullet_position(player_data, 0)
-        end_pos = cls.calculate_bullet_position(player_data, laser_range)
+    def get_laser_intersections(cls, player_data: dict, laser_range: int): # Raycasts laser vs players and bricks
+        start_pos = cls.calculate_bullet_position(player_data, 0) # Ray start
+        end_pos = cls.calculate_bullet_position(player_data, laser_range) # Ray end
         
         hit_objects = {"players": [], "bricks": []}
-        steps = 20  # Increase steps for better precision with a long laser
+        steps = 20 # Step count
         
         for step in range(steps + 1):
-            t = step / steps
-            point = (
+            t = step / steps # Interp factor
+            point = ( # Ray point
                 start_pos[0] + t * (end_pos[0] - start_pos[0]),
                 start_pos[1] + t * (end_pos[1] - start_pos[1])
             )
 
             for brick in cls.bricks:
-                if brick.rect.collidepoint(point):
+                if brick.rect.collidepoint(point): # Brick hit check
                     if brick not in hit_objects["bricks"]:
                         hit_objects["bricks"].append(brick)
 
             for other_player in cls.players:
                 if other_player.get("name") == player_data.get("name"):
                     continue
-                # Assuming player hitboxes are roughly 32x32 based on Player.SIZE_BODY_RECT
-                p_rect = pg.Rect(other_player["x"], other_player["y"], 32, 32)
-                if p_rect.collidepoint(point):
+                p_rect = pg.Rect(other_player["x"], other_player["y"], 32, 32) # Player bounds
+                if p_rect.collidepoint(point): # Player hit check
                     if other_player not in hit_objects["players"]:
                         hit_objects["players"].append(other_player)
         
