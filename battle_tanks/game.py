@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """ this is the manager game """
 
 import sys
@@ -22,33 +21,33 @@ from battle_tanks.sprites.powerup import PowerUp
 from battle_tanks.sprites.landmine import LandMine
 
 
-type_guns = {
+type_guns = { # Defines the type of guns available
     "MEDIUM": CannonType(20,"MEDIUM",(8,10)),
 }
-pg.mixer.init()
-SOUND_BOOM = pg.mixer.Sound(ROUTE("assets/sound/boom.wav"))
-SHOT = pg.mixer.Sound(ROUTE("assets/sound/shot.wav"))
-BG_TRACK = pg.mixer.music.load(ROUTE("assets/sound/bg_track.wav"))
-pg.mixer.music.play(-1)
+pg.mixer.init() # Initializes the mixer
+SOUND_BOOM = pg.mixer.Sound(ROUTE("assets/sound/boom.wav")) # Loads the sound of the explosion
+SHOT = pg.mixer.Sound(ROUTE("assets/sound/shot.wav")) # Loads the sound of the shot
+BG_TRACK = pg.mixer.music.load(ROUTE("assets/sound/bg_track.wav")) # Loads the background music
+pg.mixer.music.play(-1) # Plays the background music
 
-SOUND_BOOM.set_volume(0.1)
-SHOT.set_volume(0.1)
-pg.mixer.music.set_volume(0.5)
+SOUND_BOOM.set_volume(0.1) # Sets the volume of the explosion sound
+SHOT.set_volume(0.1) # Sets the volume of the shot sound
+pg.mixer.music.set_volume(0.5) # Sets the volume of the background music
 
-def find_sprite(rect: pg.Rect, group: pg.sprite.Group) -> Union[pg.sprite.Sprite, bool]:
-    for sprite in group:
-        if sprite.rect.colliderect(rect):
+def find_sprite(rect: pg.Rect, group: pg.sprite.Group) -> Union[pg.sprite.Sprite, bool]: # Finds a sprite in a group
+    for sprite in group: # Iterates through the group
+        if sprite.rect.colliderect(rect): # Checks if the sprite collides with the rectangle    
             return sprite
     return False
 
-class Game:
-    def __init__(self,
-                 addr:Union[Tuple[str,int], None],
-                 screen:pg.Surface,
-                 player_name="John",
-                 tank_color:int=0):
+class Game: 
+    def __init__(self, # Initial position and angle
+                 addr:Union[Tuple[str,int], None], # Address of the server
+                 screen:pg.Surface, # Screen
+                 player_name="John", # Name of the player
+                 tank_color:int=0): # Color of the tank
         
-        self.laser_timers = {}
+        self.laser_timers = {} #
         self.network = NetworkComponent(addr, player_name, tank_color) if addr is not None else None
         self._player_number = self.network.player_number if addr is not None else 0
         self.tank_color = tank_color

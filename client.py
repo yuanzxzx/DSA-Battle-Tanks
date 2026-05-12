@@ -14,7 +14,6 @@ from battle_tanks.commons.package import Struct
 from battle_tanks.components import NetworkComponent
 from battle_tanks.menu import Menu
 
-
 # class Collision:
 #     @classmethod
 #     def check_collision_bullet(cls, player_data: dict, collision_radius: int) -> dict:
@@ -162,18 +161,18 @@ def network_client_handler(client: NetworkComponent):
 def main():
     """ Client game of server"""
 
-    pg.display.set_caption(f"Battle Tank")
+    pg.display.set_caption(f"Battle Tank") # Sets the caption of the window
     pg.display.set_icon(pg.image.load(ROUTE("lemon.ico")))
-    pg.font.init()
-    pg.event.set_allowed
-    clock = pg.time.Clock()
-    WIDTH,HEIGHT = 800, 600
-    SCREEN = pg.display.set_mode((WIDTH,HEIGHT + 60))
-    hud_bg = pg.image.load(ROUTE("assets/images/hud_bg.png")).convert_alpha()
-    hud_bg = pg.transform.scale(hud_bg, (WIDTH, 60))
+    pg.font.init() # Initializes the font
+    pg.event.set_allowed # Allows events to be processed
+    clock = pg.time.Clock() # Creates a clock object
+    WIDTH,HEIGHT = 800, 600 # Sets the width and height of the screen
+    SCREEN = pg.display.set_mode((WIDTH,HEIGHT + 60)) # Sets the screen size
+    hud_bg = pg.image.load(ROUTE("assets/images/hud_bg.png")).convert_alpha() # Loads the HUD background
+    hud_bg = pg.transform.scale(hud_bg, (WIDTH, 60)) # Scales the HUD background
 
 
-    main_game = pg.Surface((WIDTH,HEIGHT))
+    main_game = pg.Surface((WIDTH,HEIGHT)) 
     menu = Menu(SCREEN)
     game = menu.update(main_game)
     menu.select_option = True
