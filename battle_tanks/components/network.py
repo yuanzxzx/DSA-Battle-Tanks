@@ -10,23 +10,22 @@ from queue import SimpleQueue
 class NetworkComponent:
     """ Client TCP connection """
 
-    def __init__(self, addr: Tuple[str, int], name: str = "John", tank_color: int = 0):
-        print(f"Connecting to {addr}, Player: {name}")
+    def __init__(self, addr: Tuple[str, int], name: str = "John", tank_color: int = 0): #Designates Tank Color for players      
         self.name = name
         self.addr = addr
         self.tank_color = tank_color
         self.lvl_map: str = ""
         
         # Instance-specific queues (not shared across instances)
-        self.SEND_Q = SimpleQueue()
-        self.UPDATE_Q = SimpleQueue()
+        self.SEND_Q = SimpleQueue() #Sends Data from Client to Server
+        self.UPDATE_Q = SimpleQueue() #Receives Data from Server to Client
 
-        self._socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._socket_tcp.connect(addr)
-        self._socket_tcp.setsockopt(socket.IPPROTO_TCP,socket.TCP_NODELAY,1)
+        self._socket_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #Creates TCP Socket
+        self._socket_tcp.connect(addr) #Connects to Server
+        self._socket_tcp.setsockopt(socket.IPPROTO_TCP,socket.TCP_NODELAY,1) #Disables Nagle's Algorithm
 
-        self.game_state: bytes = b""
-        self._player_data: Union[dict, bytes] = self.load_data()
+        self.game_state: bytes = b"" #Initializes Game State
+        self._player_data: Union[dict, bytes] = self.load_data() #uipdates gahmestate
 
 
     def load_data(self) -> Union[dict, bytes]:
@@ -37,28 +36,28 @@ class NetworkComponent:
             # Pad name to fixed length so server knows where color byte is
             name_data = self.name.encode('utf-8')
             # Pad or truncate to BUFFER_SIZE_NAME
-            if len(name_data) < Struct.BUFFER_SIZE_NAME:
+            if len(name_data) < Struct.BUFFER_SIZE_NAME: 
                 name_data = name_data + b'\x00' * (Struct.BUFFER_SIZE_NAME - len(name_data))
             else:
                 name_data = name_data[:Struct.BUFFER_SIZE_NAME]
             
-            color_data = struct.pack('B', int(self.tank_color))
+            color_data = struct.pack('B', int(self.tank_color)) #PACKS COLOR DATA
             self._socket_tcp.send(name_data + color_data)
             lvl_map = self._socket_tcp.recv(Struct.BUFFER_SIZE_LVL_MAP)
-            if lvl_map == Struct.USER_NOT_AVAILABLE:
+            if lvl_map == Struct.USER_NOT_AVAILABLE: #CHECKING USER AVAILABILITY
                 return Struct.USER_NOT_AVAILABLE
 
-            self.lvl_map = Struct.unpack(lvl_map)
+            self.lvl_map = Struct.unpack(lvl_map) #Unpacks Map
 
-            data = self._socket_tcp.recv(Struct.SIZE_PLAYER)
+            data = self._socket_tcp.recv(Struct.SIZE_PLAYER) #Initializes Game State
             data_player = Struct.unpack_player(data)
-            size_map = Struct.unpack_single_data(self._socket_tcp.recv(Struct.BUFFER_SIZE_EVENT))
+            size_map = Struct.unpack_single_data(self._socket_tcp.recv(Struct.BUFFER_SIZE_EVENT)) #Receives Size of Map
 
-            for i in range(size_map[0]):
+            for i in range(size_map[0]): #Receives Size of Map
                 split_map = self._socket_tcp.recv(Struct.BUFFER_SPLIT_MAP)
                 self.game_state += split_map
 
-            return {
+            return { #Initializes Game State
                 "position": data_player[1],
                 "x": data_player[2],
                 "y": data_player[3],
@@ -67,13 +66,9 @@ class NetworkComponent:
                 "tank_color": data_player[7] if len(data_player) > 7 else 0
             }
 
-    @staticmethod
+    @staticmethod #Modifies Data
     def _modify_data(data_arr: list) -> dict:
-        """
-        MODIFY PLAYER AND EVENTS
-        """
-
-        if data_arr[0] in Struct.STATUS_PLAYER:
+        if data_arr[0] in Struct.STATUS_PLAYER: #Modifies Player Data
             return {
                 "status": data_arr[0],
                 "position": data_arr[1],
@@ -85,7 +80,7 @@ class NetworkComponent:
                 "tank_color": data_arr[7] if len(data_arr) > 7 else 0
             }
 
-        elif data_arr[0] == Struct.BROKE_BRICK:
+        elif data_arr[0] == Struct.BROKE_BRICK: #Modifies Brick Data
             return {
                 "status": data_arr[0],
                 "x": data_arr[1],
@@ -95,31 +90,30 @@ class NetworkComponent:
             }
 
 
-    def recv_move_player(self) -> List[dict]:
-        """ get data player and states game"""
+    def recv_move_player(self) -> List[dict]: #Receives Game State
         try:
-            data = self._socket_tcp.recv(120)
-            if data != b'':
-                data_set = Struct.unpack_all_data(data)
-                return list(map(NetworkComponent._modify_data, data_set))
+            data = self._socket_tcp.recv(120) #Receives Game State
+            if data != b'': #Receives Game State
+                data_set = Struct.unpack_all_data(data) #Receives Game State
+                return list(map(NetworkComponent._modify_data, data_set)) #Receives Game State
         except BlockingIOError as e:
             # print(f"BLOCKING AS: {e}")
             pass
-        except socket.error as e:
+        except socket.error as e: #Handles Socket Errors
             print(f"THERE IS A ERROR: {e}")
             pass
 
         return []
 
 
-    def send_move_tcp(self, move: bytes):
+    def send_move_tcp(self, move: bytes): #Sends Game State
         try:
-            self._socket_tcp.send(move)
-        except socket.error as e:
-            self._socket_tcp.close()
+            self._socket_tcp.send(move) #Sends Game State
+        except socket.error as e: #Handles Socket Errors
+            self._socket_tcp.close() #Closes Socket
 
 
-    @property
+    @property #Returns Player Data
     def player_data(self) -> Union[dict, bytes]:
         """ get number of player """
         return self._player_data
@@ -135,12 +129,12 @@ class NetworkComponent:
 
 
     @property
-    def socket_tcp(self) -> socket.socket:
+    def socket_tcp(self) -> socket.socket: 
         return self._socket_tcp
 
 
     @staticmethod
-    def check_name(addr: tuple, name: str) -> Union[bool, socket.error]:
+    def check_name(addr: tuple, name: str) -> Union[bool, socket.error]: #Checks if Name is Available   
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(0.1)
@@ -164,7 +158,7 @@ class NetworkComponent:
         return False
 
 
-    def get_events_to_game_state(self):
+    def get_events_to_game_state(self): #Gets Game State
         """
         Extracts and returns the events from the current game state.
 
@@ -177,14 +171,14 @@ class NetworkComponent:
         return Struct.unpack_events(self.game_state)
 
 
-    def send_keys(self, keys: List[bytes]) -> None:
-        for action in keys:
-            self.SEND_Q.put(action)
+    def send_keys(self, keys: List[bytes]) -> None: #Sends Game State
+        for action in keys: #Sends Game State
+            self.SEND_Q.put(action) #Sends Game State
 
     
-    def recv_to_queue(self) -> bytes:
-        data = []
-        while self.UPDATE_Q.empty() is False:
-            data.extend(self.UPDATE_Q.get())
+    def recv_to_queue(self) -> bytes: #Receives Game State
+        data = [] #Receives Game State
+        while self.UPDATE_Q.empty() is False: #Receives Game State
+            data.extend(self.UPDATE_Q.get()) #Receives Game State
     
         return data

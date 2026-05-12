@@ -35,15 +35,11 @@ SOUND_BOOM.set_volume(0.1)
 SHOT.set_volume(0.1)
 pg.mixer.music.set_volume(0.5)
 
-
-
-
 def find_sprite(rect: pg.Rect, group: pg.sprite.Group) -> Union[pg.sprite.Sprite, bool]:
     for sprite in group:
         if sprite.rect.colliderect(rect):
             return sprite
     return False
-
 
 class Game:
     def __init__(self,
@@ -53,15 +49,12 @@ class Game:
                  tank_color:int=0):
         
         self.laser_timers = {}
-
         self.network = NetworkComponent(addr, player_name, tank_color) if addr is not None else None
         self._player_number = self.network.player_number if addr is not None else 0
         self.tank_color = tank_color
         self.positions = {}
 
-
         pg.display.set_caption(f"Battle Tank - Client: {self._player_number} - User: {player_name}")
-
 
         self.WIDTH,self.HEIGHT = screen.get_size()
         self.SCREEN = screen
@@ -74,8 +67,7 @@ class Game:
         self._bricks = pg.sprite.Group()
         self._bullets = pg.sprite.Group()
         self._particles = pg.sprite.Group()
-        self._damage = 0
-                     
+        self._damage = 0          
 
         if self.network and self.network.player_data != Struct.USER_NOT_AVAILABLE:
             position = (self.network.player_data["x"],self.network.player_data["y"])
@@ -99,7 +91,6 @@ class Game:
 
     def add_notification(self, text: str, duration: int = 120):
         self.notifications.append({"text": text, "timer": duration})
-
 
     @property
     def damage(self):
